@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Responsive Card Gallery</title>
+
+  <style>
+    /* Reset */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      padding-top: 80px;
+    }
+
+    /* Fixed Navigation */
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: #333;
+      color: white;
+      padding: 20px;
+      text-align: center;
+      z-index: 1000;
+    }
+
+    /* Gallery Grid */
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      padding: 20px;
+      max-width: 1200px;
+      margin: auto;
+    }
+
+    /* Card Styling */
+    .card {
+      display: flex;
+      flex-direction: column;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .card img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      border-radius: 6px;
+      margin-bottom: 12px;
+    }
+
+    .card h3 {
+      margin-bottom: 10px;
+      color: #333;
+    }
+
+    .card p {
+      line-height: 1.5;
+      color: #666;
+    }
+
+    /* Button pinned to bottom */
+    .card button {
+      margin-top: auto;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      background: #0078d4;
+      color: white;
+      cursor: pointer;
+    }
+
+    .card button:hover {
+      background: #005fa3;
+    }
+
+    /* Tablet */
+    @media (max-width: 768px) {
+      .gallery {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    /* Mobile */
+    @media (max-width: 375px) {
+      .gallery {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    Responsive Card Gallery
+  </nav>
+
+  <section class="gallery">
+
+    <div class="card">
+      https://via.placeholder.com/300x180
+      <h3>Card 1</h3>
+      <p>Short description for the first card.</p>
+      <button>Learn More</button>
+    </div>
+
+    <div class="card">
+      https://via.placeholder.com/300x180
+      <h3>Card 2</h3>
+      <p>This card has a slightly longer description to demonstrate Flexbox alignment.</p>
+      <button>Learn More</button>
+    </div>
+
+    <div class="card">
+      https://via.placeholder.com/300x180
+      <h3>Card 3</h3>
+      <p>Simple content example.</p>
+      <button>Learn More</button>
+    </div>
+
+    <div class="card">
+      https://via.placeholder.com/300x180
+      <h3>Card 4</h3>
+      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer sit amet libero vel justo aliquam fermentum.</p>
+      <button>Learn More</button>
+    </div>
+
+    <div class="card">
+      https://via.placeholder.com/300x180
+      <h3>Card 5</h3>
+      <p>Another sample card with different content length.</p>
+      <button>Learn More</button>
+    </div>
+
+    <div class="card">
+      https://via.placeholder.com/300x180
+      <h3>Card 6</h3>
+      <p>Final card used to satisfy the minimum requirement of six cards.</p>
+      <button>Learn More</button>
+    </div>
+
+  </section>
+
+</body>
+</html>
