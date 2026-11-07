@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Task Manager{% endblock %}</title>
+  <style>
+    :root { --bg:#f6f7f9; --card:#fff; --text:#1c1f24; --muted:#6b7280; --accent:#2563eb; --danger:#dc2626; --border:#e5e7eb; }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg:#14161a; --card:#1e2126; --text:#e8eaed; --muted:#9aa0a6; --accent:#60a5fa; --danger:#f87171; --border:#2e3238; }
+    }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: system-ui, sans-serif; background:var(--bg); color:var(--text); }
+    header { background:var(--card); border-bottom:1px solid var(--border); }
+    .wrap { max-width:760px; margin:0 auto; padding:1rem; }
+    header .wrap { display:flex; justify-content:space-between; align-items:center; }
+    header a.brand { font-weight:700; color:var(--text); text-decoration:none; font-size:1.2rem; }
+    a { color:var(--accent); }
+    .btn { display:inline-block; padding:.45rem .9rem; border-radius:6px; border:1px solid var(--accent);
+           background:var(--accent); color:#fff; text-decoration:none; cursor:pointer; font-size:.95rem; }
+    .btn.secondary { background:transparent; color:var(--accent); }
+    .btn.danger { background:var(--danger); border-color:var(--danger); }
+    .card { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:1rem; margin-bottom:.75rem; }
+    .row { display:flex; justify-content:space-between; align-items:center; gap:1rem; }
+    .done { text-decoration:line-through; color:var(--muted); }
+    .muted { color:var(--muted); font-size:.9rem; }
+    .actions { display:flex; gap:.5rem; align-items:center; }
+    .messages { list-style:none; padding:0; margin:0 0 1rem; }
+    .messages li { background:var(--card); border-left:4px solid var(--accent); padding:.6rem .9rem; border-radius:4px; }
+    form p { margin:0 0 1rem; }
+    form label { display:block; font-weight:600; margin-bottom:.3rem; }
+    form input[type=text], form textarea { width:100%; padding:.55rem; border:1px solid var(--border);
+      border-radius:6px; background:var(--bg); color:var(--text); font:inherit; }
+    .errorlist { color:var(--danger); list-style:none; padding:0; margin:.25rem 0; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <a class="brand" href="{% url 'tasks:list' %}">Task Manager</a>
+      <a class="btn" href="{% url 'tasks:create' %}">+ New task</a>
+    </div>
+  </header>
+  <main class="wrap">
+    {% if messages %}
+      <ul class="messages">{% for m in messages %}<li>{{ m }}</li>{% endfor %}</ul>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>
