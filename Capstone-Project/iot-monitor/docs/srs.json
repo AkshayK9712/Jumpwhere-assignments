@@ -1,0 +1,190 @@
+{
+  "title": "Software Requirements Specification - IoT Monitor API",
+  "version": "0.1",
+  "purpose": "Centralized API system to monitor, control, and analyze data from hundreds of IoT sensors across multiple factory locations.",
+  "personas": [
+    {
+      "name": "End User",
+      "does": [
+        "Registration/Login",
+        "Core feature usage",
+        "Data visualization",
+        "Account management"
+      ]
+    },
+    {
+      "name": "Administrator",
+      "does": [
+        "Dashboard access",
+        "User administration",
+        "Report generation",
+        "System configuration"
+      ]
+    },
+    {
+      "name": "Developer",
+      "does": [
+        "Code review",
+        "Testing",
+        "Deployment",
+        "Monitoring"
+      ]
+    }
+  ],
+  "domain_decisions": {
+    "main_entity": "Sensor (title=name, category=temperature|pressure|humidity, status=active|inactive|faulty, metadata=factory/location/unit/thresholds)",
+    "extra_entity": "SensorReading (id, sensor_id, value, recorded_at)",
+    "roles": [
+      "admin",
+      "user",
+      "guest"
+    ],
+    "real_time": "Polling every 5s; WebSocket optional"
+  },
+  "functional_requirements": [
+    {
+      "id": "AUTH-001",
+      "title": "User Registration",
+      "description": "Users can create accounts with email verification and role assignment",
+      "acceptance": [
+        "Email validation implemented",
+        "Password strength requirements enforced",
+        "Role-based access control setup",
+        "Account activation via email verification"
+      ]
+    },
+    {
+      "id": "AUTH-002",
+      "title": "User Login & Session Management",
+      "description": "Secure user authentication with persistent sessions",
+      "acceptance": [
+        "Secure password verification with hashing",
+        "JWT token-based session management",
+        "Remember me functionality",
+        "Logout and session cleanup"
+      ]
+    },
+    {
+      "id": "AUTH-003",
+      "title": "Role-Based Access Control",
+      "description": "Different user roles with appropriate permissions",
+      "acceptance": [
+        "Admin, user, and guest roles defined",
+        "Route protection based on roles",
+        "Feature access control",
+        "Admin panel for user management"
+      ]
+    },
+    {
+      "id": "CRUD-001",
+      "title": "Entity Management",
+      "description": "Complete CRUD functionality for all main entities",
+      "acceptance": [
+        "Create operations with validation",
+        "Read operations with filtering and pagination",
+        "Update operations with conflict resolution",
+        "Delete operations with confirmation",
+        "Bulk operations support"
+      ]
+    },
+    {
+      "id": "CRUD-002",
+      "title": "Data Validation",
+      "description": "Comprehensive input validation and sanitization",
+      "acceptance": [
+        "Client-side form validation",
+        "Server-side validation rules",
+        "Error message display",
+        "Data sanitization for security"
+      ]
+    },
+    {
+      "id": "DASH-001",
+      "title": "Interactive Dashboard",
+      "description": "Visual representation of key metrics with real-time updates",
+      "acceptance": [
+        "Charts and graphs display correctly",
+        "Real-time data updates",
+        "Responsive design on all devices",
+        "Export functionality for reports",
+        "Filter and date range selection"
+      ]
+    },
+    {
+      "id": "DASH-002",
+      "title": "Report Generation",
+      "description": "Generate detailed reports in multiple formats",
+      "acceptance": [
+        "PDF report generation",
+        "CSV data export",
+        "Scheduled report delivery",
+        "Custom report templates"
+      ]
+    },
+    {
+      "id": "API-001",
+      "title": "RESTful API Design",
+      "description": "Well-documented REST API following OpenAPI specification",
+      "acceptance": [
+        "RESTful endpoints for all entities",
+        "OpenAPI/Swagger documentation",
+        "API versioning strategy",
+        "Rate limiting implementation"
+      ]
+    },
+    {
+      "id": "API-002",
+      "title": "Bridge Integration",
+      "description": "Seamless frontend-backend or BaaS integration",
+      "acceptance": [
+        "API client library or SDK",
+        "Error handling and retry logic",
+        "Authentication token management",
+        "Real-time data synchronization"
+      ]
+    }
+  ],
+  "non_functional_requirements": {
+    "security": [
+      "Passwords hashed (bcrypt/argon2)",
+      "JWT secrets via environment variables",
+      "Input sanitization",
+      "CORS restricted to configured origins"
+    ],
+    "performance": [
+      "p95 API latency under 300ms for reads",
+      "Index on sensor_readings(sensor_id, recorded_at)"
+    ],
+    "usability": [
+      "Mobile-responsive UI"
+    ],
+    "observability": [
+      "Structured logging",
+      "ActivityLog audit trail"
+    ],
+    "deployment": [
+      "Docker Compose with Postgres",
+      "Separate dev/staging/prod configs via env vars"
+    ]
+  },
+  "data_model": [
+    "User",
+    "UserProfile",
+    "Sensor (MainEntity)",
+    "SensorReading",
+    "ActivityLog",
+    "Report",
+    "SystemConfig"
+  ],
+  "tech_stack": {
+    "backend": "FastAPI",
+    "database": "PostgreSQL",
+    "auth": "OAuth2 + JWT",
+    "frontend": "HTML, CSS, JavaScript, D3.js",
+    "deployment": "Docker"
+  },
+  "out_of_scope": [
+    "Multi-tenancy",
+    "Real hardware ingestion (sensor data is simulated/seeded)"
+  ]
+}
