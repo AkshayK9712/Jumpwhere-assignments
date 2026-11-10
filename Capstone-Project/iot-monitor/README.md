@@ -33,4 +33,14 @@ pytest
 ## Status
 
 - [x] Day 1: skeleton, Docker, SRS draft
-- [ ] Day 2: ER diagram, OpenAPI spec
+- [x] Day 2: ER diagram, OpenAPI spec, SQLAlchemy models, SRS v1.0 (Milestone M1)
+- [ ] Day 3: Alembic migrations, seed data, register/login
+
+## Design docs
+
+| File | What |
+|---|---|
+| `docs/srs.json` | Requirements, permission matrix, traceability to endpoints |
+| `docs/er-diagram.md` | ER diagram (Mermaid) |
+| `docs/schema.dbml` | Same schema for dbdiagram.io |
+| `docs/api-spec.yaml` | OpenAPI 3 contract |

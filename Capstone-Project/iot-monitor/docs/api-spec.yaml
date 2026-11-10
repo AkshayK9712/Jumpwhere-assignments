@@ -1,1 +1,2102 @@
-# OpenAPI spec - completed on Day 2 (export from FastAPI /openapi.json and refine)
+openapi: 3.0.3
+info:
+  title: IoT Monitor API
+  version: 1.0.0
+  description: 'Centralized API to monitor, control and analyze data from IoT sensors across factory locations.
+
+
+    **Authentication:** call `POST /auth/login`, then send `Authorization: Bearer <access_token>`.
+
+
+    **Rate limiting:** every response may include `X-RateLimit-Limit`, `X-RateLimit-Remaining`; exceeding the limit returns
+    429 with `Retry-After`.
+
+
+    **Errors:** `{"detail": "message"}`; validation errors (422) use the FastAPI format.
+
+
+    **Versioning:** the major version is in the URL path (`/api/v1`). Breaking changes go to `/api/v2`; v1 stays available
+    during a deprecation window.'
+servers:
+- url: http://localhost:8000/api/v1
+  description: Local development
+tags:
+- name: health
+- name: auth
+- name: users
+- name: sensors
+- name: readings
+- name: dashboard
+- name: reports
+- name: admin
+paths:
+  /health:
+    get:
+      tags:
+      - health
+      summary: Liveness check
+      operationId: health
+      responses:
+        '200':
+          description: Service is up
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /health/db:
+    get:
+      tags:
+      - health
+      summary: Database connectivity check
+      operationId: health_db
+      responses:
+        '200':
+          description: DB reachable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+        '503':
+          description: Database unavailable
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /auth/register:
+    post:
+      tags:
+      - auth
+      summary: Register a new account
+      operationId: register
+      description: Creates an inactive account with role `user` and sends an email verification link. Password must be at
+        least 8 characters with upper, lower, digit and symbol.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegister'
+      responses:
+        '201':
+          description: Account created; verification email sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserOut'
+        '409':
+          description: Email already registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /auth/verify-email:
+    get:
+      tags:
+      - auth
+      summary: Verify email address
+      operationId: verify_email
+      parameters:
+      - name: token
+        in: query
+        required: true
+        description: Signed verification token
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Account activated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        '400':
+          description: Invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /auth/resend-verification:
+    post:
+      tags:
+      - auth
+      summary: Resend verification email
+      operationId: resend_verification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailOnly'
+      responses:
+        '200':
+          description: Email sent if the account exists and is unverified
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /auth/login:
+    post:
+      tags:
+      - auth
+      summary: Log in and get tokens
+      operationId: login
+      description: OAuth2 password flow. `username` is the email. With `remember_me=true` the refresh token lasts 30 days
+        instead of 7.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LoginForm'
+      responses:
+        '200':
+          description: Token pair
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenPair'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Email not verified or account disabled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /auth/refresh:
+    post:
+      tags:
+      - auth
+      summary: Exchange refresh token for a new token pair
+      operationId: refresh_token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+      responses:
+        '200':
+          description: New token pair (old refresh token is rotated)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenPair'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /auth/logout:
+    post:
+      tags:
+      - auth
+      summary: Log out (revoke refresh token)
+      operationId: logout
+      description: 'Allowed roles: admin, user, guest.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Session closed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /users/me:
+    get:
+      tags:
+      - users
+      summary: Get my account
+      operationId: get_me
+      description: 'Allowed roles: admin, user, guest.'
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserOut'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    patch:
+      tags:
+      - users
+      summary: Update my account
+      operationId: update_me
+      description: 'Allowed roles: admin, user.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserOut'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /users/me/profile:
+    get:
+      tags:
+      - users
+      summary: Get my profile
+      operationId: get_my_profile
+      description: 'Allowed roles: admin, user, guest.'
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    put:
+      tags:
+      - users
+      summary: Create or replace my profile
+      operationId: put_my_profile
+      description: 'Allowed roles: admin, user.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserProfileUpdate'
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /users:
+    get:
+      tags:
+      - users
+      summary: List users
+      operationId: list_users
+      description: 'Allowed roles: admin.'
+      parameters:
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/PageSize'
+      - name: role
+        in: query
+        required: false
+        description: ''
+        schema:
+          $ref: '#/components/schemas/UserRole'
+      - name: is_active
+        in: query
+        required: false
+        description: ''
+        schema:
+          type: boolean
+      - name: q
+        in: query
+        required: false
+        description: Search name or email
+        schema:
+          type: string
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Page of users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPage'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /users/{user_id}:
+    get:
+      tags:
+      - users
+      summary: Get a user
+      operationId: get_user
+      description: 'Allowed roles: admin.'
+      parameters:
+      - name: user_id
+        in: path
+        required: true
+        description: ''
+        schema:
+          type: integer
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: User
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserOut'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    patch:
+      tags:
+      - users
+      summary: Update role / active state
+      operationId: admin_update_user
+      description: 'Allowed roles: admin.'
+      parameters:
+      - name: user_id
+        in: path
+        required: true
+        description: ''
+        schema:
+          type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminUserUpdate'
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserOut'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    delete:
+      tags:
+      - users
+      summary: Delete a user
+      operationId: delete_user
+      description: 'Allowed roles: admin.'
+      parameters:
+      - name: user_id
+        in: path
+        required: true
+        description: ''
+        schema:
+          type: integer
+      security:
+      - bearerAuth: []
+      responses:
+        '204':
+          description: Deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /sensors:
+    get:
+      tags:
+      - sensors
+      summary: List sensors
+      operationId: list_sensors
+      description: 'Users see their own sensors; admins and guests see all. Allowed roles: admin, user, guest.'
+      parameters:
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/PageSize'
+      - name: status
+        in: query
+        required: false
+        description: ''
+        schema:
+          $ref: '#/components/schemas/SensorStatus'
+      - name: category
+        in: query
+        required: false
+        description: ''
+        schema:
+          $ref: '#/components/schemas/SensorCategory'
+      - name: priority
+        in: query
+        required: false
+        description: ''
+        schema:
+          $ref: '#/components/schemas/Priority'
+      - name: q
+        in: query
+        required: false
+        description: Search title/description
+        schema:
+          type: string
+      - name: sort
+        in: query
+        required: false
+        description: ''
+        schema:
+          type: string
+          enum:
+          - title
+          - -title
+          - created_at
+          - -created_at
+          - priority
+          - -priority
+          default: -created_at
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Page of sensors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SensorPage'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      tags:
+      - sensors
+      summary: Create a sensor
+      operationId: create_sensor
+      description: 'Allowed roles: admin, user.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SensorCreate'
+      security:
+      - bearerAuth: []
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sensor'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /sensors/bulk:
+    post:
+      tags:
+      - sensors
+      summary: Bulk create sensors
+      operationId: bulk_create_sensors
+      description: 'Allowed roles: admin, user.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkSensorCreate'
+      security:
+      - bearerAuth: []
+      responses:
+        '201':
+          description: Result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkResult'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    delete:
+      tags:
+      - sensors
+      summary: Bulk delete sensors
+      operationId: bulk_delete_sensors
+      description: 'Allowed roles: admin, user.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkIds'
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkResult'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /sensors/{sensor_id}:
+    get:
+      tags:
+      - sensors
+      summary: Get a sensor
+      operationId: get_sensor
+      description: 'Allowed roles: admin, user, guest.'
+      parameters:
+      - name: sensor_id
+        in: path
+        required: true
+        description: Sensor ID
+        schema:
+          type: integer
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Sensor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sensor'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    put:
+      tags:
+      - sensors
+      summary: Replace a sensor
+      operationId: replace_sensor
+      description: 'Allowed roles: admin, user.'
+      parameters:
+      - name: sensor_id
+        in: path
+        required: true
+        description: Sensor ID
+        schema:
+          type: integer
+      - name: If-Unmodified-Since
+        in: header
+        required: false
+        schema:
+          type: string
+          format: date-time
+        description: 'Optimistic concurrency: reject with 409 if the sensor changed after this time.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SensorCreate'
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sensor'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    patch:
+      tags:
+      - sensors
+      summary: Partially update a sensor
+      operationId: update_sensor
+      description: 'Allowed roles: admin, user.'
+      parameters:
+      - name: sensor_id
+        in: path
+        required: true
+        description: Sensor ID
+        schema:
+          type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SensorUpdate'
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sensor'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    delete:
+      tags:
+      - sensors
+      summary: Delete a sensor
+      operationId: delete_sensor
+      description: 'Allowed roles: admin, user.'
+      parameters:
+      - name: sensor_id
+        in: path
+        required: true
+        description: Sensor ID
+        schema:
+          type: integer
+      security:
+      - bearerAuth: []
+      responses:
+        '204':
+          description: Deleted (with its readings)
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /sensors/{sensor_id}/readings:
+    get:
+      tags:
+      - readings
+      summary: List readings of a sensor
+      operationId: list_readings
+      description: 'Allowed roles: admin, user, guest.'
+      parameters:
+      - name: sensor_id
+        in: path
+        required: true
+        description: Sensor ID
+        schema:
+          type: integer
+      - name: from
+        in: query
+        required: false
+        description: ''
+        schema:
+          type: string
+          format: date-time
+      - name: to
+        in: query
+        required: false
+        description: ''
+        schema:
+          type: string
+          format: date-time
+      - name: limit
+        in: query
+        required: false
+        description: ''
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 5000
+          default: 500
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Readings, newest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Reading'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      tags:
+      - readings
+      summary: Add a reading
+      operationId: create_reading
+      description: 'Allowed roles: admin, user.'
+      parameters:
+      - name: sensor_id
+        in: path
+        required: true
+        description: Sensor ID
+        schema:
+          type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReadingCreate'
+      security:
+      - bearerAuth: []
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reading'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /sensors/{sensor_id}/readings/bulk:
+    post:
+      tags:
+      - readings
+      summary: Ingest many readings
+      operationId: bulk_create_readings
+      description: 'Allowed roles: admin, user.'
+      parameters:
+      - name: sensor_id
+        in: path
+        required: true
+        description: Sensor ID
+        schema:
+          type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReadingBulkCreate'
+      security:
+      - bearerAuth: []
+      responses:
+        '201':
+          description: Result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkResult'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /dashboard/summary:
+    get:
+      tags:
+      - dashboard
+      summary: Key metrics
+      operationId: dashboard_summary
+      description: 'Designed for polling every 5 seconds. Allowed roles: admin, user, guest.'
+      parameters:
+      - name: category
+        in: query
+        required: false
+        description: ''
+        schema:
+          $ref: '#/components/schemas/SensorCategory'
+      - name: from
+        in: query
+        required: false
+        description: ''
+        schema:
+          type: string
+          format: date-time
+      - name: to
+        in: query
+        required: false
+        description: ''
+        schema:
+          type: string
+          format: date-time
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardSummary'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /dashboard/timeseries:
+    get:
+      tags:
+      - dashboard
+      summary: Aggregated readings for charts
+      operationId: dashboard_timeseries
+      description: 'Allowed roles: admin, user, guest.'
+      parameters:
+      - name: sensor_id
+        in: query
+        required: true
+        description: ''
+        schema:
+          type: integer
+      - name: from
+        in: query
+        required: false
+        description: ''
+        schema:
+          type: string
+          format: date-time
+      - name: to
+        in: query
+        required: false
+        description: ''
+        schema:
+          type: string
+          format: date-time
+      - name: interval
+        in: query
+        required: false
+        description: ''
+        schema:
+          type: string
+          enum:
+          - minute
+          - hour
+          - day
+          default: hour
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Series
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimeSeries'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /reports:
+    get:
+      tags:
+      - reports
+      summary: List my reports
+      operationId: list_reports
+      description: 'Allowed roles: admin, user, guest.'
+      parameters:
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/PageSize'
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Reports
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Report'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      tags:
+      - reports
+      summary: Generate or schedule a report
+      operationId: create_report
+      description: 'Allowed roles: admin, user.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportCreate'
+      security:
+      - bearerAuth: []
+      responses:
+        '202':
+          description: Accepted; generation runs in background
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Report'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /reports/{report_id}:
+    get:
+      tags:
+      - reports
+      summary: Get report metadata
+      operationId: get_report
+      description: 'Allowed roles: admin, user, guest.'
+      parameters:
+      - name: report_id
+        in: path
+        required: true
+        description: ''
+        schema:
+          type: integer
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Report'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    delete:
+      tags:
+      - reports
+      summary: Delete a report
+      operationId: delete_report
+      description: 'Allowed roles: admin, user.'
+      parameters:
+      - name: report_id
+        in: path
+        required: true
+        description: ''
+        schema:
+          type: integer
+      security:
+      - bearerAuth: []
+      responses:
+        '204':
+          description: Deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /reports/{report_id}/download:
+    get:
+      tags:
+      - reports
+      summary: Download the report file
+      operationId: download_report
+      description: 'Allowed roles: admin, user, guest.'
+      parameters:
+      - name: report_id
+        in: path
+        required: true
+        description: ''
+        schema:
+          type: integer
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: PDF or CSV file
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            text/csv:
+              schema:
+                type: string
+                format: binary
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Report not ready yet
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /admin/activity-logs:
+    get:
+      tags:
+      - admin
+      summary: Query the audit trail
+      operationId: list_activity_logs
+      description: 'Allowed roles: admin.'
+      parameters:
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/PageSize'
+      - name: user_id
+        in: query
+        required: false
+        description: ''
+        schema:
+          type: integer
+      - name: action
+        in: query
+        required: false
+        description: ''
+        schema:
+          type: string
+      - name: entity_type
+        in: query
+        required: false
+        description: ''
+        schema:
+          type: string
+      - name: from
+        in: query
+        required: false
+        description: ''
+        schema:
+          type: string
+          format: date-time
+      - name: to
+        in: query
+        required: false
+        description: ''
+        schema:
+          type: string
+          format: date-time
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Page of logs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActivityLogPage'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /admin/config:
+    get:
+      tags:
+      - admin
+      summary: List system configuration
+      operationId: list_config
+      description: 'Allowed roles: admin.'
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: All config entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SystemConfig'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /admin/config/{key}:
+    get:
+      tags:
+      - admin
+      summary: Get one config entry
+      operationId: get_config
+      description: 'Allowed roles: admin.'
+      parameters:
+      - name: key
+        in: path
+        required: true
+        schema:
+          type: string
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Entry
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemConfig'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    put:
+      tags:
+      - admin
+      summary: Create or update a config entry
+      operationId: put_config
+      description: 'Allowed roles: admin.'
+      parameters:
+      - name: key
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SystemConfigUpdate'
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Entry
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemConfig'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    Page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    PageSize:
+      name: page_size
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+  responses:
+    Unauthorized:
+      description: Missing, invalid or expired token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Role not allowed to perform this action
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: Resource was modified by someone else
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ValidationError:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationErrorBody'
+    TooManyRequests:
+      description: Rate limit exceeded
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+          description: Seconds to wait
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    Error:
+      type: object
+      properties:
+        detail:
+          type: string
+      required:
+      - detail
+    ValidationErrorBody:
+      type: object
+      properties:
+        detail:
+          type: array
+          items:
+            type: object
+            properties:
+              loc:
+                type: array
+                items:
+                  type: string
+              msg:
+                type: string
+              type:
+                type: string
+    Message:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+      - message
+    Health:
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok
+        database:
+          type: string
+          example: connected
+      required:
+      - status
+    EmailOnly:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+      required:
+      - email
+    UserRole:
+      type: string
+      enum:
+      - admin
+      - user
+      - guest
+    SensorStatus:
+      type: string
+      enum:
+      - active
+      - inactive
+      - faulty
+    SensorCategory:
+      type: string
+      enum:
+      - temperature
+      - pressure
+      - humidity
+      - vibration
+      - flow
+      - other
+    Priority:
+      type: string
+      enum:
+      - low
+      - medium
+      - high
+      - critical
+    UserRegister:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+          maxLength: 128
+          format: password
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+      required:
+      - email
+      - password
+      - name
+    LoginForm:
+      type: object
+      properties:
+        username:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+        remember_me:
+          type: boolean
+          default: false
+      required:
+      - username
+      - password
+    RefreshRequest:
+      type: object
+      properties:
+        refresh_token:
+          type: string
+      required:
+      - refresh_token
+    TokenPair:
+      type: object
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        token_type:
+          type: string
+          example: bearer
+        expires_in:
+          type: integer
+          example: 900
+      required:
+      - access_token
+      - refresh_token
+      - token_type
+      - expires_in
+    UserOut:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        role:
+          $ref: '#/components/schemas/UserRole'
+        is_active:
+          type: boolean
+        email_verified:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        last_login:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - id
+      - email
+      - name
+      - role
+      - is_active
+      - email_verified
+      - created_at
+    UserUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 120
+    AdminUserUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        role:
+          $ref: '#/components/schemas/UserRole'
+        is_active:
+          type: boolean
+    UserPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserOut'
+        total:
+          type: integer
+        page:
+          type: integer
+        page_size:
+          type: integer
+        pages:
+          type: integer
+      required:
+      - items
+      - total
+      - page
+      - page_size
+      - pages
+    UserProfileUpdate:
+      type: object
+      properties:
+        avatar_url:
+          type: string
+          nullable: true
+        bio:
+          type: string
+          nullable: true
+          maxLength: 500
+        phone:
+          type: string
+          nullable: true
+        preferences:
+          type: object
+          additionalProperties: true
+        timezone:
+          type: string
+          default: UTC
+        language:
+          type: string
+          default: en
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        avatar_url:
+          type: string
+          nullable: true
+        bio:
+          type: string
+          nullable: true
+          maxLength: 500
+        phone:
+          type: string
+          nullable: true
+        preferences:
+          type: object
+          additionalProperties: true
+        timezone:
+          type: string
+          default: UTC
+        language:
+          type: string
+          default: en
+      required:
+      - id
+      - user_id
+    SensorCreate:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 150
+        description:
+          type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/SensorStatus'
+        priority:
+          $ref: '#/components/schemas/Priority'
+        category:
+          $ref: '#/components/schemas/SensorCategory'
+        metadata:
+          type: object
+          properties:
+            factory:
+              type: string
+            location:
+              type: string
+            unit:
+              type: string
+              example: °C
+            thresholds:
+              type: object
+              properties:
+                min:
+                  type: number
+                max:
+                  type: number
+          additionalProperties: true
+      required:
+      - title
+      - category
+    SensorUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 150
+        description:
+          type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/SensorStatus'
+        priority:
+          $ref: '#/components/schemas/Priority'
+        category:
+          $ref: '#/components/schemas/SensorCategory'
+        metadata:
+          type: object
+          properties:
+            factory:
+              type: string
+            location:
+              type: string
+            unit:
+              type: string
+              example: °C
+            thresholds:
+              type: object
+              properties:
+                min:
+                  type: number
+                max:
+                  type: number
+          additionalProperties: true
+    Sensor:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        title:
+          type: string
+          minLength: 1
+          maxLength: 150
+        description:
+          type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/SensorStatus'
+        priority:
+          $ref: '#/components/schemas/Priority'
+        category:
+          $ref: '#/components/schemas/SensorCategory'
+        metadata:
+          type: object
+          properties:
+            factory:
+              type: string
+            location:
+              type: string
+            unit:
+              type: string
+              example: °C
+            thresholds:
+              type: object
+              properties:
+                min:
+                  type: number
+                max:
+                  type: number
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+      - id
+      - user_id
+      - title
+      - status
+      - priority
+      - category
+      - metadata
+      - created_at
+      - updated_at
+    SensorPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Sensor'
+        total:
+          type: integer
+        page:
+          type: integer
+        page_size:
+          type: integer
+        pages:
+          type: integer
+      required:
+      - items
+      - total
+      - page
+      - page_size
+      - pages
+    BulkSensorCreate:
+      type: object
+      properties:
+        items:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/SensorCreate'
+      required:
+      - items
+    BulkIds:
+      type: object
+      properties:
+        ids:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            type: integer
+      required:
+      - ids
+    BulkResult:
+      type: object
+      properties:
+        processed:
+          type: integer
+        failed:
+          type: integer
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              index:
+                type: integer
+              detail:
+                type: string
+      required:
+      - processed
+      - failed
+    ReadingCreate:
+      type: object
+      properties:
+        value:
+          type: number
+        recorded_at:
+          type: string
+          format: date-time
+          description: Defaults to server time
+      required:
+      - value
+    ReadingBulkCreate:
+      type: object
+      properties:
+        items:
+          type: array
+          minItems: 1
+          maxItems: 1000
+          items:
+            $ref: '#/components/schemas/ReadingCreate'
+      required:
+      - items
+    Reading:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        sensor_id:
+          type: integer
+        value:
+          type: number
+        recorded_at:
+          type: string
+          format: date-time
+      required:
+      - id
+      - sensor_id
+      - value
+      - recorded_at
+    DashboardSummary:
+      type: object
+      properties:
+        total_sensors:
+          type: integer
+        active_sensors:
+          type: integer
+        inactive_sensors:
+          type: integer
+        faulty_sensors:
+          type: integer
+        readings_last_24h:
+          type: integer
+        sensors_by_category:
+          type: object
+          additionalProperties:
+            type: integer
+        generated_at:
+          type: string
+          format: date-time
+      required:
+      - total_sensors
+      - active_sensors
+      - inactive_sensors
+      - faulty_sensors
+      - readings_last_24h
+      - generated_at
+    TimeSeries:
+      type: object
+      properties:
+        sensor_id:
+          type: integer
+        interval:
+          type: string
+        points:
+          type: array
+          items:
+            type: object
+            properties:
+              bucket:
+                type: string
+                format: date-time
+              avg:
+                type: number
+              min:
+                type: number
+              max:
+                type: number
+              count:
+                type: integer
+      required:
+      - sensor_id
+      - interval
+      - points
+    ReportCreate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 150
+        format:
+          type: string
+          enum:
+          - pdf
+          - csv
+        query_params:
+          type: object
+          properties:
+            sensor_ids:
+              type: array
+              items:
+                type: integer
+            category:
+              $ref: '#/components/schemas/SensorCategory'
+            from:
+              type: string
+              format: date-time
+            to:
+              type: string
+              format: date-time
+            template:
+              type: string
+              enum:
+              - summary
+              - detailed
+              - alerts
+              default: summary
+          additionalProperties: true
+        scheduled:
+          type: boolean
+          default: false
+        schedule:
+          type: object
+          properties:
+            frequency:
+              type: string
+              enum:
+              - daily
+              - weekly
+              - monthly
+            email:
+              type: boolean
+              default: true
+          description: Required when scheduled is true
+      required:
+      - name
+      - format
+    Report:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        name:
+          type: string
+        format:
+          type: string
+          enum:
+          - pdf
+          - csv
+        status:
+          type: string
+          enum:
+          - pending
+          - ready
+          - failed
+        query_params:
+          type: object
+          additionalProperties: true
+        scheduled:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - id
+      - user_id
+      - name
+      - format
+      - status
+      - scheduled
+      - created_at
+    ActivityLog:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        user_id:
+          type: integer
+          nullable: true
+        action:
+          type: string
+          example: sensor.create
+        entity_type:
+          type: string
+          nullable: true
+        entity_id:
+          type: integer
+          nullable: true
+        details:
+          type: object
+          additionalProperties: true
+        ip_address:
+          type: string
+          nullable: true
+        user_agent:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+      required:
+      - id
+      - action
+      - created_at
+    ActivityLogPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActivityLog'
+        total:
+          type: integer
+        page:
+          type: integer
+        page_size:
+          type: integer
+        pages:
+          type: integer
+      required:
+      - items
+      - total
+      - page
+      - page_size
+      - pages
+    SystemConfigUpdate:
+      type: object
+      properties:
+        value: {}
+        description:
+          type: string
+          nullable: true
+        is_active:
+          type: boolean
+          default: true
+      required:
+      - value
+    SystemConfig:
+      type: object
+      properties:
+        id:
+          type: integer
+        key:
+          type: string
+        value: {}
+        description:
+          type: string
+          nullable: true
+        is_active:
+          type: boolean
+        updated_by:
+          type: integer
+          nullable: true
+        updated_at:
+          type: string
+          format: date-time
+      required:
+      - id
+      - key
+      - value
+      - is_active
+      - updated_at

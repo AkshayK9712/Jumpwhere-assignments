@@ -1,6 +1,6 @@
 {
   "title": "Software Requirements Specification - IoT Monitor API",
-  "version": "0.1",
+  "version": "1.0",
   "purpose": "Centralized API system to monitor, control, and analyze data from hundreds of IoT sensors across multiple factory locations.",
   "personas": [
     {
@@ -167,15 +167,37 @@
       "Separate dev/staging/prod configs via env vars"
     ]
   },
-  "data_model": [
-    "User",
-    "UserProfile",
-    "Sensor (MainEntity)",
-    "SensorReading",
-    "ActivityLog",
-    "Report",
-    "SystemConfig"
-  ],
+  "data_model": {
+    "entities": [
+      "User",
+      "UserProfile",
+      "Sensor (MainEntity)",
+      "SensorReading",
+      "ActivityLog",
+      "Report",
+      "SystemConfig",
+      "RefreshToken"
+    ],
+    "relationships": [
+      "User 1 - 0..1 UserProfile",
+      "User 1 - * Sensor",
+      "Sensor 1 - * SensorReading",
+      "User 1 - * ActivityLog (SET NULL on delete)",
+      "User 1 - * Report",
+      "User 1 - * RefreshToken",
+      "User 1 - * SystemConfig via updated_by (SET NULL on delete)"
+    ],
+    "additions_to_brief": {
+      "SensorReading": "Time-series storage required by the dashboard and reports.",
+      "RefreshToken": "Allows logout and session cleanup by revoking refresh tokens.",
+      "Report.status / Report.file_path": "Reports are generated in the background and downloaded later."
+    },
+    "references": [
+      "docs/er-diagram.md",
+      "docs/schema.dbml",
+      "src/app/models/"
+    ]
+  },
   "tech_stack": {
     "backend": "FastAPI",
     "database": "PostgreSQL",
@@ -186,5 +208,248 @@
   "out_of_scope": [
     "Multi-tenancy",
     "Real hardware ingestion (sensor data is simulated/seeded)"
+  ],
+  "status": "Baselined on Day 2 (end of Milestone M1)",
+  "traceability_matrix": {
+    "AUTH-001": [
+      {
+        "operationId": "register",
+        "endpoint": "POST /auth/register"
+      },
+      {
+        "operationId": "verify_email",
+        "endpoint": "GET /auth/verify-email"
+      },
+      {
+        "operationId": "resend_verification",
+        "endpoint": "POST /auth/resend-verification"
+      }
+    ],
+    "AUTH-002": [
+      {
+        "operationId": "login",
+        "endpoint": "POST /auth/login"
+      },
+      {
+        "operationId": "refresh_token",
+        "endpoint": "POST /auth/refresh"
+      },
+      {
+        "operationId": "logout",
+        "endpoint": "POST /auth/logout"
+      }
+    ],
+    "AUTH-003": [
+      {
+        "operationId": "list_users",
+        "endpoint": "GET /users"
+      },
+      {
+        "operationId": "get_user",
+        "endpoint": "GET /users/{user_id}"
+      },
+      {
+        "operationId": "admin_update_user",
+        "endpoint": "PATCH /users/{user_id}"
+      },
+      {
+        "operationId": "delete_user",
+        "endpoint": "DELETE /users/{user_id}"
+      },
+      {
+        "operationId": "get_me",
+        "endpoint": "GET /users/me"
+      }
+    ],
+    "CRUD-001": [
+      {
+        "operationId": "list_sensors",
+        "endpoint": "GET /sensors"
+      },
+      {
+        "operationId": "create_sensor",
+        "endpoint": "POST /sensors"
+      },
+      {
+        "operationId": "get_sensor",
+        "endpoint": "GET /sensors/{sensor_id}"
+      },
+      {
+        "operationId": "replace_sensor",
+        "endpoint": "PUT /sensors/{sensor_id}"
+      },
+      {
+        "operationId": "update_sensor",
+        "endpoint": "PATCH /sensors/{sensor_id}"
+      },
+      {
+        "operationId": "delete_sensor",
+        "endpoint": "DELETE /sensors/{sensor_id}"
+      },
+      {
+        "operationId": "bulk_create_sensors",
+        "endpoint": "POST /sensors/bulk"
+      },
+      {
+        "operationId": "bulk_delete_sensors",
+        "endpoint": "DELETE /sensors/bulk"
+      },
+      {
+        "operationId": "list_readings",
+        "endpoint": "GET /sensors/{sensor_id}/readings"
+      },
+      {
+        "operationId": "create_reading",
+        "endpoint": "POST /sensors/{sensor_id}/readings"
+      },
+      {
+        "operationId": "bulk_create_readings",
+        "endpoint": "POST /sensors/{sensor_id}/readings/bulk"
+      }
+    ],
+    "CRUD-002": [
+      {
+        "operationId": "create_sensor",
+        "endpoint": "POST /sensors"
+      },
+      {
+        "operationId": "update_sensor",
+        "endpoint": "PATCH /sensors/{sensor_id}"
+      },
+      {
+        "operationId": "register",
+        "endpoint": "POST /auth/register"
+      },
+      {
+        "operationId": "create_reading",
+        "endpoint": "POST /sensors/{sensor_id}/readings"
+      }
+    ],
+    "DASH-001": [
+      {
+        "operationId": "dashboard_summary",
+        "endpoint": "GET /dashboard/summary"
+      },
+      {
+        "operationId": "dashboard_timeseries",
+        "endpoint": "GET /dashboard/timeseries"
+      },
+      {
+        "operationId": "list_readings",
+        "endpoint": "GET /sensors/{sensor_id}/readings"
+      }
+    ],
+    "DASH-002": [
+      {
+        "operationId": "create_report",
+        "endpoint": "POST /reports"
+      },
+      {
+        "operationId": "list_reports",
+        "endpoint": "GET /reports"
+      },
+      {
+        "operationId": "get_report",
+        "endpoint": "GET /reports/{report_id}"
+      },
+      {
+        "operationId": "download_report",
+        "endpoint": "GET /reports/{report_id}/download"
+      },
+      {
+        "operationId": "delete_report",
+        "endpoint": "DELETE /reports/{report_id}"
+      }
+    ],
+    "API-001": [
+      {
+        "operationId": "health",
+        "endpoint": "GET /health"
+      },
+      {
+        "operationId": "health_db",
+        "endpoint": "GET /health/db"
+      }
+    ],
+    "API-002": [
+      {
+        "operationId": "login",
+        "endpoint": "POST /auth/login"
+      },
+      {
+        "operationId": "refresh_token",
+        "endpoint": "POST /auth/refresh"
+      }
+    ]
+  },
+  "traceability_notes": {
+    "API-001": "Satisfied by the whole spec in docs/api-spec.yaml: OpenAPI 3, /api/v1 versioning, 429 rate limiting.",
+    "API-002": "Frontend API client (token storage, retry, refresh) is built on Day 6."
+  },
+  "permission_matrix": {
+    "roles": [
+      "admin",
+      "user",
+      "guest"
+    ],
+    "rules": {
+      "Register / login / verify email": [
+        "public"
+      ],
+      "View own account and profile": [
+        "admin",
+        "user",
+        "guest"
+      ],
+      "Edit own account and profile": [
+        "admin",
+        "user"
+      ],
+      "List and view sensors and readings": {
+        "admin": "all",
+        "user": "own sensors",
+        "guest": "all, read-only"
+      },
+      "Create / edit / delete sensors and readings": {
+        "admin": "all",
+        "user": "own sensors",
+        "guest": "no"
+      },
+      "Dashboard": [
+        "admin",
+        "user",
+        "guest"
+      ],
+      "Create and download reports": {
+        "admin": "yes",
+        "user": "yes",
+        "guest": "view and download only"
+      },
+      "User management (list, change role, deactivate, delete)": [
+        "admin"
+      ],
+      "Audit log and system configuration": [
+        "admin"
+      ]
+    }
+  },
+  "api": {
+    "specification": "docs/api-spec.yaml",
+    "base_path": "/api/v1",
+    "operations": 38,
+    "conventions": {
+      "pagination": "page (>=1) and page_size (1-100, default 20); responses include total and pages",
+      "errors": "{\"detail\": \"...\"}; 422 uses FastAPI validation format",
+      "rate_limits": "Default 100 requests/min per user; 10 requests/min per IP on /auth/login and /auth/register",
+      "auth": "Bearer JWT, access token 15 min; refresh token 7 days (30 with remember_me)",
+      "concurrency": "PUT/PATCH on sensors honours If-Unmodified-Since; 409 on conflict"
+    }
+  },
+  "assumptions": [
+    "Sensor data is simulated or seeded; real hardware ingestion is out of scope.",
+    "A new account is inactive until the email link is clicked; self-registration always creates role 'user'.",
+    "The first admin is created by a seed script (Day 3).",
+    "Dashboard 'real-time' means polling every 5 seconds.",
+    "Report generation runs in a background task; scheduled reports are checked by an in-process scheduler."
   ]
 }
