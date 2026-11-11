@@ -1,6 +1,6 @@
 {
   "title": "Software Requirements Specification - IoT Monitor API",
-  "version": "1.0",
+  "version": "1.1",
   "purpose": "Centralized API system to monitor, control, and analyze data from hundreds of IoT sensors across multiple factory locations.",
   "personas": [
     {
@@ -209,7 +209,7 @@
     "Multi-tenancy",
     "Real hardware ingestion (sensor data is simulated/seeded)"
   ],
-  "status": "Baselined on Day 2 (end of Milestone M1)",
+  "status": "M1 baseline (Day 2); auth implementation started Day 3",
   "traceability_matrix": {
     "AUTH-001": [
       {
@@ -450,6 +450,9 @@
     "A new account is inactive until the email link is clicked; self-registration always creates role 'user'.",
     "The first admin is created by a seed script (Day 3).",
     "Dashboard 'real-time' means polling every 5 seconds.",
-    "Report generation runs in a background task; scheduled reports are checked by an in-process scheduler."
+    "Report generation runs in a background task; scheduled reports are checked by an in-process scheduler.",
+    "Passwords are limited to 72 characters (bcrypt limit).",
+    "Day 3: REQUIRE_EMAIL_VERIFICATION=false so accounts are usable immediately; Day 4 turns it on and adds /auth/verify-email.",
+    "Refresh tokens rotate on every use; reusing a revoked token revokes all of that user's sessions."
   ]
 }

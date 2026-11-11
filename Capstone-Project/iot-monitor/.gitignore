@@ -9,3 +9,6 @@ venv/
 *.egg-info/
 pgdata/
 .DS_Store
+
+dev.db
+*.db

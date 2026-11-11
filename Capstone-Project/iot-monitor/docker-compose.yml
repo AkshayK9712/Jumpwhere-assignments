@@ -22,7 +22,9 @@ services:
       - "8000:8000"
     volumes:
       - ./src:/app/src
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+      - ./db:/app/db
+    # Runs migrations, seeds data, then starts the API with hot reload
+    command: sh -c "alembic upgrade head && python scripts/seed.py && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
     depends_on:
       db:
         condition: service_healthy

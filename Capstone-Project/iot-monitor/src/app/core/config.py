@@ -1,6 +1,10 @@
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Project root = .../iot-monitor (this file is src/app/core/config.py)
+ROOT_DIR = Path(__file__).resolve().parents[3]
 
 
 class Settings(BaseSettings):
@@ -14,12 +18,21 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"  # development | staging | production
     LOG_LEVEL: str = "INFO"
 
-    # Auth settings (used from Day 3)
+    # Auth
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    REFRESH_TOKEN_REMEMBER_DAYS: int = 30
+    # Day 3: False = new accounts are active immediately.
+    # Day 4 switches this to True (account must be activated via email link).
+    REQUIRE_EMAIL_VERIFICATION: bool = False
 
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    # Seed data (python scripts/seed.py)
+    ADMIN_EMAIL: str = "admin@example.com"
+    ADMIN_PASSWORD: str = "Admin@12345"
+    SEED_DEMO_DATA: bool = True
+
+    model_config = SettingsConfigDict(env_file=ROOT_DIR / ".env", extra="ignore")
 
     @property
     def cors_origins_list(self) -> list[str]:

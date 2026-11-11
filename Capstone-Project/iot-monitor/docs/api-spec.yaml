@@ -1463,7 +1463,7 @@ components:
         password:
           type: string
           minLength: 8
-          maxLength: 128
+          maxLength: 72
           format: password
         name:
           type: string
