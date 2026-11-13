@@ -9,6 +9,8 @@ from fastapi.staticfiles import StaticFiles
 from app.api.v1 import api_router
 from app.core.config import settings
 from app.core.logging import setup_logging
+from app.core.middleware import RequestLoggingMiddleware
+from app.core.rate_limit import RateLimitMiddleware
 
 setup_logging()
 logger = logging.getLogger(__name__)
@@ -16,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("IoT Monitor API started (env=%s)", settings.ENVIRONMENT)
+    logger.info("IoT Monitor API started (env=%s, email=%s)", settings.ENVIRONMENT, settings.EMAIL_BACKEND)
     yield
     logger.info("IoT Monitor API shutting down")
 
@@ -28,15 +30,20 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Middleware order: the LAST one added is the OUTERMOST.
+# CORS must be outermost so even 429/500 responses carry CORS headers.
+app.add_middleware(RateLimitMiddleware)
+app.add_middleware(RequestLoggingMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["X-Request-ID", "X-API-Version", "X-RateLimit-Limit", "X-RateLimit-Remaining", "Retry-After"],
 )
 
-# Versioned API: /api/v1/...
+# Versioned API: /api/v1/...  (breaking changes will ship under /api/v2)
 app.include_router(api_router, prefix="/api/v1")
 
 

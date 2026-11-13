@@ -8,8 +8,8 @@ info:
     **Authentication:** call `POST /auth/login`, then send `Authorization: Bearer <access_token>`.
 
 
-    **Rate limiting:** every response may include `X-RateLimit-Limit`, `X-RateLimit-Remaining`; exceeding the limit returns
-    429 with `Retry-After`.
+    **Rate limiting:** 100 requests/minute per user (per IP when not logged in); 10/minute per IP on login, register and resend-verification.
+    Responses carry `X-RateLimit-Limit` and `X-RateLimit-Remaining`; exceeding the limit returns 429 with `Retry-After`.
 
 
     **Errors:** `{"detail": "message"}`; validation errors (422) use the FastAPI format.
@@ -438,6 +438,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserOut'
+        '400':
+          description: Not allowed on your own account (role change, deactivation, deletion)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           $ref: '#/components/responses/NotFound'
         '401':
@@ -466,6 +472,12 @@ paths:
       responses:
         '204':
           description: Deleted
+        '400':
+          description: Not allowed on your own account (role change, deactivation, deletion)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           $ref: '#/components/responses/NotFound'
         '401':
@@ -574,7 +586,8 @@ paths:
       - sensors
       summary: Bulk create sensors
       operationId: bulk_create_sensors
-      description: 'Allowed roles: admin, user.'
+      description: 'All-or-nothing: if any item is invalid the whole request fails with 422 and nothing is created. Allowed
+        roles: admin, user.'
       requestBody:
         required: true
         content:
@@ -603,7 +616,8 @@ paths:
       - sensors
       summary: Bulk delete sensors
       operationId: bulk_delete_sensors
-      description: 'Allowed roles: admin, user.'
+      description: 'Partial: sensors that do not exist or are not yours are listed in `errors`; the rest are deleted. Allowed
+        roles: admin, user.'
       requestBody:
         required: true
         content:
@@ -1809,6 +1823,10 @@ components:
           type: integer
         failed:
           type: integer
+        ids:
+          type: array
+          items:
+            type: integer
         errors:
           type: array
           items:

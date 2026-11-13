@@ -23,9 +23,21 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     REFRESH_TOKEN_REMEMBER_DAYS: int = 30
-    # Day 3: False = new accounts are active immediately.
-    # Day 4 switches this to True (account must be activated via email link).
-    REQUIRE_EMAIL_VERIFICATION: bool = False
+    REQUIRE_EMAIL_VERIFICATION: bool = True   # Day 4: accounts start inactive until the email link is used
+    VERIFY_TOKEN_EXPIRE_HOURS: int = 24
+
+    # Email: console = print the email to the log (default, no setup needed)
+    #        smtp    = send via SMTP_HOST:SMTP_PORT (MailHog in Docker)
+    #        memory  = keep in a Python list (used by tests)
+    EMAIL_BACKEND: str = "console"
+    SMTP_HOST: str = "localhost"
+    SMTP_PORT: int = 1025
+    EMAIL_FROM: str = "no-reply@iot-monitor.local"
+
+    # Rate limiting (in-memory, per process)
+    RATE_LIMIT_ENABLED: bool = True
+    RATE_LIMIT_DEFAULT_PER_MINUTE: int = 100   # per user (or per IP when not logged in)
+    RATE_LIMIT_AUTH_PER_MINUTE: int = 10       # per IP on login / register / resend-verification
 
     # Seed data (python scripts/seed.py)
     ADMIN_EMAIL: str = "admin@example.com"

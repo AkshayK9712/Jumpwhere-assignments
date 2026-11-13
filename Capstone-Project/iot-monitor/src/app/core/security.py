@@ -4,7 +4,7 @@ import re
 import secrets
 from datetime import datetime, timedelta, timezone
 
-from jose import jwt
+from jose import JWTError, jwt
 from passlib.context import CryptContext
 
 from app.core.config import settings
@@ -50,8 +50,6 @@ def create_access_token(user_id: int, role: str, expires_delta: timedelta | None
 
 def decode_access_token(token: str) -> dict:
     """Raises jose.JWTError if the token is invalid, expired or not an access token."""
-    from jose import JWTError
-
     claims = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM])
     if claims.get("type") != "access":
         raise JWTError("Not an access token")
@@ -65,3 +63,20 @@ def generate_refresh_token() -> str:
 
 def hash_token(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
+
+
+# ---------- email tokens (verification links) ----------
+def create_email_token(user_id: int, purpose: str, expires_delta: timedelta | None = None) -> str:
+    """Signed, expiring token for links sent by email. `purpose` e.g. "verify"."""
+    now = datetime.now(timezone.utc)
+    expire = now + (expires_delta if expires_delta is not None else timedelta(hours=settings.VERIFY_TOKEN_EXPIRE_HOURS))
+    claims = {"sub": str(user_id), "type": purpose, "iat": now, "exp": expire}
+    return jwt.encode(claims, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
+
+
+def decode_email_token(token: str, purpose: str) -> dict:
+    """Raises JWTError if invalid, expired, or issued for a different purpose."""
+    claims = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM])
+    if claims.get("type") != purpose:
+        raise JWTError("Wrong token purpose")
+    return claims

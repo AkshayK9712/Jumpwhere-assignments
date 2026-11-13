@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 
 from fastapi import HTTPException, Request, status
+from jose import JWTError
 from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -8,6 +9,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.security import (
     create_access_token,
+    decode_email_token,
     generate_refresh_token,
     hash_password,
     hash_token,
@@ -145,3 +147,27 @@ def revoke_refresh_token(db: Session, raw_token: str, user: User, request: Reque
         row.revoked = True
         db.commit()
     log_activity(db, "auth.logout", user_id=user.id, entity_type="user", entity_id=user.id, request=request)
+
+
+# ---------- email verification (AUTH-001) ----------
+def verify_email(db: Session, token: str, request: Request | None = None) -> None:
+    invalid = HTTPException(status.HTTP_400_BAD_REQUEST, "Invalid or expired verification link")
+    try:
+        user_id = int(decode_email_token(token, "verify")["sub"])
+    except (JWTError, KeyError, ValueError):
+        raise invalid
+    user = db.get(User, user_id)
+    if user is None:
+        raise invalid
+    # Only the FIRST verification activates the account, so re-clicking an old link
+    # cannot re-enable a user an admin has deactivated.
+    if not user.email_verified:
+        user.email_verified = True
+        user.is_active = True
+        db.commit()
+        log_activity(db, "auth.verify_email", user_id=user.id, entity_type="user", entity_id=user.id, request=request)
+
+
+def find_unverified_user(db: Session, email: str) -> User | None:
+    user = db.scalar(select(User).where(User.email == email.lower().strip()))
+    return user if user is not None and not user.email_verified else None

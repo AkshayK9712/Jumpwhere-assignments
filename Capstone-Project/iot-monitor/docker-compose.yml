@@ -18,6 +18,9 @@ services:
   api:
     build: .
     env_file: .env
+    environment:
+      EMAIL_BACKEND: smtp      # send verification emails to MailHog (http://localhost:8025)
+      SMTP_HOST: mailhog
     ports:
       - "8000:8000"
     volumes:

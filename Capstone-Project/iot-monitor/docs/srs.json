@@ -1,6 +1,6 @@
 {
   "title": "Software Requirements Specification - IoT Monitor API",
-  "version": "1.1",
+  "version": "1.2",
   "purpose": "Centralized API system to monitor, control, and analyze data from hundreds of IoT sensors across multiple factory locations.",
   "personas": [
     {
@@ -209,7 +209,7 @@
     "Multi-tenancy",
     "Real hardware ingestion (sensor data is simulated/seeded)"
   ],
-  "status": "M1 baseline (Day 2); auth implementation started Day 3",
+  "status": "Milestone M2 (Day 5): auth, RBAC, user admin, sensors/readings CRUD, audit log, rate limiting implemented",
   "traceability_matrix": {
     "AUTH-001": [
       {
@@ -440,9 +440,11 @@
     "conventions": {
       "pagination": "page (>=1) and page_size (1-100, default 20); responses include total and pages",
       "errors": "{\"detail\": \"...\"}; 422 uses FastAPI validation format",
-      "rate_limits": "Default 100 requests/min per user; 10 requests/min per IP on /auth/login and /auth/register",
+      "rate_limits": "Per user (per IP when not logged in): 100 requests/min. Per IP: 10 requests/min on login, register and resend-verification. In-memory, per server process. Health endpoints are exempt. 429 responses include Retry-After.",
       "auth": "Bearer JWT, access token 15 min; refresh token 7 days (30 with remember_me)",
-      "concurrency": "PUT/PATCH on sensors honours If-Unmodified-Since; 409 on conflict"
+      "concurrency": "PUT/PATCH on sensors honours If-Unmodified-Since; 409 on conflict",
+      "headers": "Every response carries X-Request-ID and X-API-Version; limited routes add X-RateLimit-Limit / X-RateLimit-Remaining",
+      "bulk": "Bulk create is all-or-nothing (422 if any item is invalid); bulk delete is partial and reports errors per id"
     }
   },
   "assumptions": [
@@ -453,6 +455,12 @@
     "Report generation runs in a background task; scheduled reports are checked by an in-process scheduler.",
     "Passwords are limited to 72 characters (bcrypt limit).",
     "Day 3: REQUIRE_EMAIL_VERIFICATION=false so accounts are usable immediately; Day 4 turns it on and adds /auth/verify-email.",
-    "Refresh tokens rotate on every use; reusing a revoked token revokes all of that user's sessions."
+    "Refresh tokens rotate on every use; reusing a revoked token revokes all of that user's sessions.",
+    "Email verification is on by default (REQUIRE_EMAIL_VERIFICATION=true). Development uses the console email backend, Docker uses MailHog.",
+    "An admin cannot demote, deactivate or delete their own account (prevents lock-out).",
+    "Deactivating a user revokes all their refresh tokens; their access token stops working immediately because it is re-checked on every request.",
+    "A user asking for another user's sensor receives 404, not 403, so sensor ids cannot be discovered.",
+    "Single readings are not audit-logged (high volume); bulk ingestion is.",
+    "Text input is sanitized (HTML tags and control characters removed) before storage."
   ]
 }
