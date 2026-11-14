@@ -31,7 +31,8 @@ def send_email(to: str, subject: str, body: str) -> None:
 
 
 def verification_link(token: str) -> str:
-    return f"{settings.API_BASE_URL.rstrip('/')}/api/v1/auth/verify-email?token={token}"
+    # Opens the frontend page, which then calls GET /api/v1/auth/verify-email
+    return f"{settings.API_BASE_URL.rstrip('/')}/ui/#/verify?token={token}"
 
 
 def send_verification_email(user_id: int, email: str, name: str) -> None:

@@ -21,7 +21,7 @@ def test_register_sends_verification_email(client):
     _register(client)
     assert len(email.OUTBOX) == 1
     assert email.OUTBOX[0]["to"] == "bob@example.com"
-    assert "/api/v1/auth/verify-email?token=" in email.OUTBOX[0]["body"]
+    assert "/ui/#/verify?token=" in email.OUTBOX[0]["body"]
 
 
 def test_full_flow_register_verify_login(client):

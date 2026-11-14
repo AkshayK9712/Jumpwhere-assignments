@@ -29,7 +29,7 @@ Without Docker, verification emails are **printed in the terminal** where uvicor
 |---|---|
 | http://localhost:8000/docs | Swagger UI (use the Authorize button) |
 | http://localhost:8000/api/v1/health/db | DB check |
-| http://localhost:8000/ui/ | Frontend |
+| http://localhost:8000/ui/ | Web app (log in, sensors, admin) |
 | http://localhost:8025 | MailHog (Docker only) |
 
 ## Seeded accounts
@@ -68,10 +68,41 @@ Full contract: `docs/api-spec.yaml`.
 - **Rate limits:** 100 requests/min per user, 10/min per IP on login/register/resend-verification. Exceeding returns `429` + `Retry-After`.
 - **Logging:** each request is logged with its `X-Request-ID`; sign-ups, logins, sensor changes and admin actions are stored in `activity_logs`.
 
+## Web app (`/ui/`)
+
+Plain HTML, CSS and JavaScript (ES modules): no build step. Open http://localhost:8000/ui/ after starting the server.
+
+| Page | Who | Route |
+|---|---|---|
+| Log in / Sign up / Verify email | everyone | `#/login`, `#/register`, `#/verify` |
+| Home (counts, recent sensors) | any logged-in user | `#/` |
+| Sensor list (search, filters, sort, paging, bulk delete) | any logged-in user | `#/sensors` |
+| Sensor detail + readings | any logged-in user | `#/sensors/:id` |
+| Create / edit sensor | admin, user | `#/sensors/new`, `#/sensors/:id/edit` |
+| My profile | any logged-in user (guests read-only) | `#/profile` |
+| User management, audit log | admin | `#/admin/users`, `#/admin/logs` |
+
+How the pieces fit (`src/frontend/js/`):
+
+| File | Job |
+|---|---|
+| `api.js` | API client: adds the token, refreshes it on 401, retries temporary failures, turns errors into `ApiError` |
+| `session.js` | Token storage ("remember me" = localStorage, otherwise sessionStorage) |
+| `auth.js` | login, register, logout, verify, resend |
+| `router.js`, `route-match.js` | `#/path` routing with login and role guards |
+| `ui.js`, `components.js` | DOM helpers (no `innerHTML`), toasts, dialogs, forms, pager |
+| `validators.js` | Client-side validation that mirrors the server rules |
+| `views/*.js` | One file per page |
+
+To add a page: create `views/my-page.js` exporting a function that returns an element, then add one line to the `routes` list in `main.js`.
+
+Security notes: the UI sends a strict Content-Security-Policy (no inline scripts or styles, same-origin only), builds all DOM with text nodes, and the server re-checks every permission, so hiding a button is only a convenience.
+
 ## Tests
 
 ```bash
-pytest -v
+pytest -v                 # backend + static checks of the web app
+npm run test:frontend     # JavaScript unit tests (needs Node 20 or newer; optional)
 ```
 
 ## Database migrations
@@ -93,7 +124,9 @@ alembic downgrade -1                              # undo last
 - [x] Day 3: migrations, seed data, register/login/refresh/logout with JWT
 - [x] Day 4: email verification, role-based access control, admin user management
 - [x] Day 5: sensor and reading CRUD, validation, audit log, rate limiting (M2)
-- [ ] Day 6: frontend shell, API client
+- [x] Day 6: frontend shell, login/register/verify pages, API client with token refresh and retry
+- [x] Day 7: sensor list and forms, role-based routes, admin pages, responsive layout (M3)
+- [ ] Day 8: dashboard with charts
 
 ## Design docs
 

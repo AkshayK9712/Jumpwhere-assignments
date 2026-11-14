@@ -1,6 +1,6 @@
 {
   "title": "Software Requirements Specification - IoT Monitor API",
-  "version": "1.2",
+  "version": "1.3",
   "purpose": "Centralized API system to monitor, control, and analyze data from hundreds of IoT sensors across multiple factory locations.",
   "personas": [
     {
@@ -209,7 +209,7 @@
     "Multi-tenancy",
     "Real hardware ingestion (sensor data is simulated/seeded)"
   ],
-  "status": "Milestone M2 (Day 5): auth, RBAC, user admin, sensors/readings CRUD, audit log, rate limiting implemented",
+  "status": "Milestone M3 (Day 7): web UI for auth, sensors, profile and admin implemented",
   "traceability_matrix": {
     "AUTH-001": [
       {
@@ -384,7 +384,7 @@
   },
   "traceability_notes": {
     "API-001": "Satisfied by the whole spec in docs/api-spec.yaml: OpenAPI 3, /api/v1 versioning, 429 rate limiting.",
-    "API-002": "Frontend API client (token storage, retry, refresh) is built on Day 6."
+    "API-002": "Implemented in src/frontend/js/api.js: bearer token handling, single-flight refresh on 401, retry with back-off (GET/PUT/DELETE on network errors and 502-504; any method on 429), normalized errors. Real-time sync arrives with the dashboard (polling)."
   },
   "permission_matrix": {
     "roles": [
@@ -461,6 +461,9 @@
     "Deactivating a user revokes all their refresh tokens; their access token stops working immediately because it is re-checked on every request.",
     "A user asking for another user's sensor receives 404, not 403, so sensor ids cannot be discovered.",
     "Single readings are not audit-logged (high volume); bulk ingestion is.",
-    "Text input is sanitized (HTML tags and control characters removed) before storage."
+    "Text input is sanitized (HTML tags and control characters removed) before storage.",
+    "The web app is a static single-page app served by the API at /ui (no build step); it talks to /api/v1 on the same origin, so CORS is not needed.",
+    "Access and refresh tokens are kept in browser storage; a strict Content-Security-Policy and DOM building without innerHTML reduce XSS risk.",
+    "Verification emails link to the web app (/ui/#/verify?token=...), which calls GET /api/v1/auth/verify-email."
   ]
 }

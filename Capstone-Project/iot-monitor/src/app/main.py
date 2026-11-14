@@ -1,4 +1,5 @@
 import logging
+import mimetypes
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -9,10 +10,15 @@ from fastapi.staticfiles import StaticFiles
 from app.api.v1 import api_router
 from app.core.config import settings
 from app.core.logging import setup_logging
-from app.core.middleware import RequestLoggingMiddleware
+from app.core.middleware import RequestLoggingMiddleware, SecurityHeadersMiddleware
 from app.core.rate_limit import RateLimitMiddleware
 
 setup_logging()
+
+# Windows can map .js to text/plain, which browsers refuse for ES modules
+mimetypes.add_type("text/javascript", ".js")
+mimetypes.add_type("text/css", ".css")
+
 logger = logging.getLogger(__name__)
 
 
@@ -34,6 +40,7 @@ app = FastAPI(
 # CORS must be outermost so even 429/500 responses carry CORS headers.
 app.add_middleware(RateLimitMiddleware)
 app.add_middleware(RequestLoggingMiddleware)
+app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins_list,

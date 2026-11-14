@@ -30,3 +30,21 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         logger.log(level, "%s %s -> %s (%.1f ms) rid=%s", request.method, request.url.path,
                    response.status_code, duration_ms, request_id)
         return response
+
+
+CSP = (
+    "default-src 'self'; img-src 'self' data: https:; style-src 'self'; script-src 'self'; "
+    "connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+)
+
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    """nosniff everywhere; a strict Content-Security-Policy for the web UI (not for /docs)."""
+
+    async def dispatch(self, request, call_next):
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        if request.url.path.startswith("/ui"):
+            response.headers["Content-Security-Policy"] = CSP
+            response.headers["Cache-Control"] = "no-cache"  # always revalidate, so edits show up on refresh
+        return response
