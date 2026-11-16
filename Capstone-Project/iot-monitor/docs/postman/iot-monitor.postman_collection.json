@@ -1,0 +1,1817 @@
+{
+  "info": {
+    "name": "IoT Monitor API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Generated from docs/api-spec.yaml. Run 'auth / Log in and get tokens' first; it stores the tokens used by every other request."
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000/api/v1"
+    },
+    {
+      "key": "email",
+      "value": "admin@example.com"
+    },
+    {
+      "key": "password",
+      "value": "Admin@12345"
+    },
+    {
+      "key": "access_token",
+      "value": ""
+    },
+    {
+      "key": "refresh_token",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "health",
+      "item": [
+        {
+          "name": "Liveness check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ],
+              "variable": [],
+              "query": []
+            },
+            "description": "\n\noperationId: health",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Database connectivity check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health/db",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health",
+                "db"
+              ],
+              "variable": [],
+              "query": []
+            },
+            "description": "\n\noperationId: health_db",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "auth",
+      "item": [
+        {
+          "name": "Register a new account",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ],
+              "variable": [],
+              "query": []
+            },
+            "description": "Creates an inactive account with role `user` and sends an email verification link. Password must be at least 8 characters with upper, lower, digit and symbol.\n\noperationId: register",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"ann@example.com\",\n  \"password\": \"Str0ng!Pass\",\n  \"name\": \"Ann Lee\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verify email address",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/verify-email",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "verify-email"
+              ],
+              "variable": [],
+              "query": [
+                {
+                  "key": "token",
+                  "value": "",
+                  "description": "Signed verification token",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "\n\noperationId: verify_email",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Resend verification email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/resend-verification",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "resend-verification"
+              ],
+              "variable": [],
+              "query": []
+            },
+            "description": "\n\noperationId: resend_verification",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"ann@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Log in and get tokens",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ],
+              "variable": [],
+              "query": []
+            },
+            "description": "OAuth2 password flow. `username` is the email. With `remember_me=true` the refresh token lasts 30 days instead of 7.\n\noperationId: login",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "username",
+                  "value": "{{email}}"
+                },
+                {
+                  "key": "password",
+                  "value": "{{password}}"
+                },
+                {
+                  "key": "remember_me",
+                  "value": "false"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Logged in', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('access_token', body.access_token);",
+                  "pm.collectionVariables.set('refresh_token', body.refresh_token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Exchange refresh token for a new token pair",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ],
+              "variable": [],
+              "query": []
+            },
+            "description": "\n\noperationId: refresh_token",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const body = pm.response.json();",
+                  "  pm.collectionVariables.set('access_token', body.access_token);",
+                  "  pm.collectionVariables.set('refresh_token', body.refresh_token);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Log out (revoke refresh token)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ],
+              "variable": [],
+              "query": []
+            },
+            "description": "Allowed roles: admin, user, guest.\n\noperationId: logout",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "users",
+      "item": [
+        {
+          "name": "Get my account",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "me"
+              ],
+              "variable": [],
+              "query": []
+            },
+            "description": "Allowed roles: admin, user, guest.\n\noperationId: get_me"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update my account",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "me"
+              ],
+              "variable": [],
+              "query": []
+            },
+            "description": "Allowed roles: admin, user.\n\noperationId: update_me",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ann Lee\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get my profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/me/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "me",
+                "profile"
+              ],
+              "variable": [],
+              "query": []
+            },
+            "description": "Allowed roles: admin, user, guest.\n\noperationId: get_my_profile"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create or replace my profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/me/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "me",
+                "profile"
+              ],
+              "variable": [],
+              "query": []
+            },
+            "description": "Allowed roles: admin, user.\n\noperationId: put_my_profile",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bio\": \"Maintenance lead\",\n  \"phone\": \"+91 98765 43210\",\n  \"timezone\": \"Asia/Kolkata\",\n  \"language\": \"en-IN\",\n  \"preferences\": {\n    \"theme\": \"dark\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users"
+              ],
+              "variable": [],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page_size",
+                  "value": "",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "role",
+                  "value": "",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "is_active",
+                  "value": "",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "q",
+                  "value": "",
+                  "description": "Search name or email",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Allowed roles: admin.\n\noperationId: list_users"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get a user",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/:user_id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                ":user_id"
+              ],
+              "variable": [
+                {
+                  "key": "user_id",
+                  "value": "2"
+                }
+              ],
+              "query": []
+            },
+            "description": "Allowed roles: admin.\n\noperationId: get_user"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update role / active state",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/:user_id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                ":user_id"
+              ],
+              "variable": [
+                {
+                  "key": "user_id",
+                  "value": "2"
+                }
+              ],
+              "query": []
+            },
+            "description": "Allowed roles: admin.\n\noperationId: admin_update_user",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"user\",\n  \"is_active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete a user",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/:user_id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                ":user_id"
+              ],
+              "variable": [
+                {
+                  "key": "user_id",
+                  "value": "2"
+                }
+              ],
+              "query": []
+            },
+            "description": "Allowed roles: admin.\n\noperationId: delete_user"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "sensors",
+      "item": [
+        {
+          "name": "List sensors",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sensors",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sensors"
+              ],
+              "variable": [],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page_size",
+                  "value": "",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "category",
+                  "value": "",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "priority",
+                  "value": "",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "q",
+                  "value": "",
+                  "description": "Search title/description",
+                  "disabled": true
+                },
+                {
+                  "key": "sort",
+                  "value": "",
+                  "description": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Users see their own sensors; admins and guests see all. Allowed roles: admin, user, guest.\n\noperationId: list_sensors"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create a sensor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sensors",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sensors"
+              ],
+              "variable": [],
+              "query": []
+            },
+            "description": "Allowed roles: admin, user.\n\noperationId: create_sensor",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Boiler Temperature\",\n  \"description\": \"Main boiler outlet\",\n  \"category\": \"temperature\",\n  \"status\": \"active\",\n  \"priority\": \"high\",\n  \"metadata\": {\n    \"factory\": \"Hyderabad Plant\",\n    \"location\": \"Boiler Room\",\n    \"unit\": \"°C\",\n    \"thresholds\": {\n      \"min\": 60,\n      \"max\": 90\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Bulk create sensors",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sensors/bulk",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sensors",
+                "bulk"
+              ],
+              "variable": [],
+              "query": []
+            },
+            "description": "All-or-nothing: if any item is invalid the whole request fails with 422 and nothing is created. Allowed roles: admin, user.\n\noperationId: bulk_create_sensors",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    {\n      \"title\": \"Pump A\",\n      \"category\": \"pressure\"\n    },\n    {\n      \"title\": \"Pump B\",\n      \"category\": \"pressure\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Bulk delete sensors",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sensors/bulk",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sensors",
+                "bulk"
+              ],
+              "variable": [],
+              "query": []
+            },
+            "description": "Partial: sensors that do not exist or are not yours are listed in `errors`; the rest are deleted. Allowed roles: admin, user.\n\noperationId: bulk_delete_sensors",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ids\": [\n    7,\n    8\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get a sensor",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sensors/:sensor_id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sensors",
+                ":sensor_id"
+              ],
+              "variable": [
+                {
+                  "key": "sensor_id",
+                  "value": "1"
+                }
+              ],
+              "query": []
+            },
+            "description": "Allowed roles: admin, user, guest.\n\noperationId: get_sensor"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Replace a sensor",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "If-Unmodified-Since",
+                "value": "",
+                "disabled": true
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sensors/:sensor_id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sensors",
+                ":sensor_id"
+              ],
+              "variable": [
+                {
+                  "key": "sensor_id",
+                  "value": "1"
+                }
+              ],
+              "query": []
+            },
+            "description": "Allowed roles: admin, user.\n\noperationId: replace_sensor",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Boiler Temperature\",\n  \"category\": \"temperature\",\n  \"status\": \"active\",\n  \"priority\": \"high\",\n  \"metadata\": {\n    \"unit\": \"°C\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Partially update a sensor",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sensors/:sensor_id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sensors",
+                ":sensor_id"
+              ],
+              "variable": [
+                {
+                  "key": "sensor_id",
+                  "value": "1"
+                }
+              ],
+              "query": []
+            },
+            "description": "Allowed roles: admin, user.\n\noperationId: update_sensor",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"faulty\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete a sensor",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sensors/:sensor_id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sensors",
+                ":sensor_id"
+              ],
+              "variable": [
+                {
+                  "key": "sensor_id",
+                  "value": "1"
+                }
+              ],
+              "query": []
+            },
+            "description": "Allowed roles: admin, user.\n\noperationId: delete_sensor"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "readings",
+      "item": [
+        {
+          "name": "List readings of a sensor",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sensors/:sensor_id/readings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sensors",
+                ":sensor_id",
+                "readings"
+              ],
+              "variable": [
+                {
+                  "key": "sensor_id",
+                  "value": "1"
+                }
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Allowed roles: admin, user, guest.\n\noperationId: list_readings"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Add a reading",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sensors/:sensor_id/readings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sensors",
+                ":sensor_id",
+                "readings"
+              ],
+              "variable": [
+                {
+                  "key": "sensor_id",
+                  "value": "1"
+                }
+              ],
+              "query": []
+            },
+            "description": "Allowed roles: admin, user.\n\noperationId: create_reading",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"value\": 71.5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ingest many readings",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sensors/:sensor_id/readings/bulk",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sensors",
+                ":sensor_id",
+                "readings",
+                "bulk"
+              ],
+              "variable": [
+                {
+                  "key": "sensor_id",
+                  "value": "1"
+                }
+              ],
+              "query": []
+            },
+            "description": "Allowed roles: admin, user.\n\noperationId: bulk_create_readings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    {\n      \"value\": 70.1\n    },\n    {\n      \"value\": 71.5,\n      \"recorded_at\": \"2026-11-14T10:00:00Z\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "dashboard",
+      "item": [
+        {
+          "name": "Key metrics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/dashboard/summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dashboard",
+                "summary"
+              ],
+              "variable": [],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "from",
+                  "value": "",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "",
+                  "description": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Designed for polling every 5 seconds. Allowed roles: admin, user, guest.\n\noperationId: dashboard_summary"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Aggregated readings for charts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/dashboard/timeseries",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dashboard",
+                "timeseries"
+              ],
+              "variable": [],
+              "query": [
+                {
+                  "key": "sensor_id",
+                  "value": "",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "from",
+                  "value": "",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "interval",
+                  "value": "",
+                  "description": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Allowed roles: admin, user, guest.\n\noperationId: dashboard_timeseries"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "reports",
+      "item": [
+        {
+          "name": "List my reports",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reports",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reports"
+              ],
+              "variable": [],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page_size",
+                  "value": "",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "scheduled",
+                  "value": "",
+                  "description": "true = schedule definitions, false = generated reports",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Allowed roles: admin, user, guest.\n\noperationId: list_reports"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Generate or schedule a report",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reports",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reports"
+              ],
+              "variable": [],
+              "query": []
+            },
+            "description": "Allowed roles: admin, user.\n\noperationId: create_report",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Weekly plant report\",\n  \"format\": \"pdf\",\n  \"query_params\": {\n    \"template\": \"summary\",\n    \"category\": \"temperature\",\n    \"window_hours\": 168\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get report metadata",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reports/:report_id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reports",
+                ":report_id"
+              ],
+              "variable": [
+                {
+                  "key": "report_id",
+                  "value": "1"
+                }
+              ],
+              "query": []
+            },
+            "description": "Allowed roles: admin, user, guest.\n\noperationId: get_report"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete a report",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reports/:report_id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reports",
+                ":report_id"
+              ],
+              "variable": [
+                {
+                  "key": "report_id",
+                  "value": "1"
+                }
+              ],
+              "query": []
+            },
+            "description": "Allowed roles: admin, user.\n\noperationId: delete_report"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Download the report file",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reports/:report_id/download",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reports",
+                ":report_id",
+                "download"
+              ],
+              "variable": [
+                {
+                  "key": "report_id",
+                  "value": "1"
+                }
+              ],
+              "query": []
+            },
+            "description": "Allowed roles: admin, user, guest.\n\noperationId: download_report"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "admin",
+      "item": [
+        {
+          "name": "Query the audit trail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/activity-logs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "activity-logs"
+              ],
+              "variable": [],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page_size",
+                  "value": "",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "user_id",
+                  "value": "",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "action",
+                  "value": "",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "entity_type",
+                  "value": "",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "from",
+                  "value": "",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "",
+                  "description": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Allowed roles: admin.\n\noperationId: list_activity_logs"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List system configuration",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/config",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "config"
+              ],
+              "variable": [],
+              "query": []
+            },
+            "description": "Allowed roles: admin.\n\noperationId: list_config"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get one config entry",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/config/:key",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "config",
+                ":key"
+              ],
+              "variable": [
+                {
+                  "key": "key",
+                  "value": "dashboard.poll_interval_seconds"
+                }
+              ],
+              "query": []
+            },
+            "description": "Allowed roles: admin.\n\noperationId: get_config"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create or update a config entry",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/config/:key",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "config",
+                ":key"
+              ],
+              "variable": [
+                {
+                  "key": "key",
+                  "value": "dashboard.poll_interval_seconds"
+                }
+              ],
+              "query": []
+            },
+            "description": "Allowed roles: admin.\n\noperationId: put_config",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"value\": 5,\n  \"description\": \"Dashboard refresh interval in seconds\",\n  \"is_active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No server error', () => pm.expect(pm.response.code).to.be.below(500));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

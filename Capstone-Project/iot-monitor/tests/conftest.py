@@ -9,14 +9,16 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 
 @pytest.fixture(autouse=True)
-def _isolate_settings(monkeypatch):
-    """Every test: no rate limiting, emails kept in memory, clean state."""
+def _isolate_settings(monkeypatch, tmp_path):
+    """Every test: no rate limiting, no background scheduler, emails in memory, reports in a temp folder."""
     from app.core.config import settings
     from app.core.rate_limit import limiter
     from app.services import email
 
     monkeypatch.setattr(settings, "RATE_LIMIT_ENABLED", False)
     monkeypatch.setattr(settings, "EMAIL_BACKEND", "memory")
+    monkeypatch.setattr(settings, "SCHEDULER_ENABLED", False)
+    monkeypatch.setattr(settings, "REPORTS_DIR", str(tmp_path / "reports"))
     limiter.reset()
     email.OUTBOX.clear()
 
@@ -55,7 +57,7 @@ def client(engine):
     from fastapi.testclient import TestClient
     from sqlalchemy.orm import sessionmaker
 
-    from app.db.session import get_db
+    from app.db.session import get_db, get_session_factory
     from app.main import app
 
     TestingSession = sessionmaker(bind=engine, autoflush=False)
@@ -68,6 +70,7 @@ def client(engine):
             db.close()
 
     app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_session_factory] = lambda: TestingSession  # background jobs use the test database
     with TestClient(app) as c:
         yield c
     app.dependency_overrides.clear()
@@ -107,3 +110,29 @@ def bearer():
         return {"Authorization": f"Bearer {create_access_token(user.id, user.role.value)}"}
 
     return _headers
+
+
+@pytest.fixture()
+def session_factory(engine):
+    """For tests that call the scheduler / report generator directly."""
+    from sqlalchemy.orm import sessionmaker
+
+    return sessionmaker(bind=engine, autoflush=False)
+
+
+@pytest.fixture()
+def make_sensor(db_session):
+    """make_sensor(owner, title="S", category="temperature", status="active", meta=None, readings=[(datetime, value)])"""
+
+    def _make(owner, title="Sensor", category="temperature", status="active", meta=None, readings=()):
+        from app.models import Sensor, SensorCategory, SensorReading, SensorStatus
+
+        sensor = Sensor(user_id=owner.id, title=title, category=SensorCategory(category), status=SensorStatus(status), meta=meta or {})
+        for when, value in readings:
+            sensor.readings.append(SensorReading(value=value, recorded_at=when))
+        db_session.add(sensor)
+        db_session.commit()
+        db_session.refresh(sensor)
+        return sensor
+
+    return _make

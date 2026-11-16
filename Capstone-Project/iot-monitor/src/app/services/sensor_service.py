@@ -28,6 +28,11 @@ def _visible(user: User):
     return stmt
 
 
+def visible_sensors(user: User):
+    """SELECT of the sensors this user may see (used by dashboard and reports too)."""
+    return _visible(user)
+
+
 def get_visible_sensor(db: Session, user: User, sensor_id: int) -> Sensor:
     sensor = db.get(Sensor, sensor_id)
     # 404 (not 403) so users cannot discover other people's sensor ids

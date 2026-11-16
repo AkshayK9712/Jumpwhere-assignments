@@ -153,3 +153,13 @@ export function pager({ page, pages, total, pageSize, onPage, onPageSize }) {
       [10, 20, 50].map((n) => h("option", { value: n, selected: n === pageSize }, `${n} / page`))),
   );
 }
+
+/** Offer a Blob to the user as a file download. */
+export function saveBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const link = h("a", { href: url, download: filename || "download" });
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}

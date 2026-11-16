@@ -161,3 +161,25 @@ test("custom headers are passed (If-Unmodified-Since)", async () => {
   await api.put("/sensors/1", {}, { headers: { "If-Unmodified-Since": "2026-11-14T10:00:00Z" } });
   assert.equal(calls[0].headers["If-Unmodified-Since"], "2026-11-14T10:00:00Z");
 });
+
+test("blob downloads return the file and its name", async () => {
+  login();
+  const calls = mockFetch([new Response("a,b\r\n1,2\r\n", { status: 200, headers: { "Content-Type": "text/csv", "Content-Disposition": 'attachment; filename="Plant-report-20261114.csv"' } })]);
+  const { blob, filename } = await api.request("GET", "/reports/5/download", { blob: true });
+  assert.equal(filename, "Plant-report-20261114.csv");
+  assert.equal(await blob.text(), "a,b\r\n1,2\r\n");
+  assert.equal(calls[0].headers.Authorization, "Bearer A1");
+});
+
+test("blob download errors still become ApiError", async () => {
+  login();
+  mockFetch([json({ detail: "Report is pending, not ready to download" }, 409)]);
+  await assert.rejects(api.request("GET", "/reports/5/download", { blob: true }), (e) => e.status === 409 && /pending/.test(e.message));
+});
+
+test("filenameFrom understands both header styles", () => {
+  assert.equal(api.filenameFrom('attachment; filename="a b.pdf"'), "a b.pdf");
+  assert.equal(api.filenameFrom("attachment; filename=plain.csv"), "plain.csv");
+  assert.equal(api.filenameFrom("attachment; filename*=UTF-8''r%C3%A9sum%C3%A9.pdf"), "résumé.pdf");
+  assert.equal(api.filenameFrom(null), null);
+});

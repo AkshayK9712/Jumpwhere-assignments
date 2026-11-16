@@ -3,8 +3,9 @@ import * as session from "./session.js";
 import { h, roleBadge } from "./ui.js";
 
 const LINKS = [
-  { href: "/", label: "Home" },
+  { href: "/", label: "Dashboard" },
   { href: "/sensors", label: "Sensors" },
+  { href: "/reports", label: "Reports" },
   { href: "/admin/users", label: "Users", roles: ["admin"] },
   { href: "/admin/logs", label: "Audit log", roles: ["admin"] },
 ];

@@ -1,42 +1,35 @@
+# Production-style stack: PostgreSQL + API (+ the web app served by the API).
+#   docker compose -f docker-compose.yml up -d --build
+# For development, plain `docker compose up --build` also loads docker-compose.override.yml
+# (hot reload, MailHog, demo data simulator).
 services:
   db:
     image: postgres:16
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: iot
-      POSTGRES_PASSWORD: iot
-      POSTGRES_DB: iotdb
-    ports:
-      - "5432:5432"
+      POSTGRES_USER: ${POSTGRES_USER:-iot}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-iot}
+      POSTGRES_DB: ${POSTGRES_DB:-iotdb}
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U iot -d iotdb"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-iot} -d $${POSTGRES_DB:-iotdb}"]
       interval: 5s
       timeout: 5s
       retries: 10
 
   api:
     build: .
+    restart: unless-stopped
     env_file: .env
-    environment:
-      EMAIL_BACKEND: smtp      # send verification emails to MailHog (http://localhost:8025)
-      SMTP_HOST: mailhog
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"   # only this machine; put a TLS reverse proxy in front (see docs/deployment.md)
     volumes:
-      - ./src:/app/src
-      - ./db:/app/db
-    # Runs migrations, seeds data, then starts the API with hot reload
-    command: sh -c "alembic upgrade head && python scripts/seed.py && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+      - reports:/app/reports_output
     depends_on:
       db:
         condition: service_healthy
 
-  mailhog:
-    image: mailhog/mailhog
-    ports:
-      - "1025:1025"   # SMTP
-      - "8025:8025"   # Web UI
-
 volumes:
   pgdata:
+  reports:

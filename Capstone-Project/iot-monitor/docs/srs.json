@@ -1,6 +1,6 @@
 {
   "title": "Software Requirements Specification - IoT Monitor API",
-  "version": "1.3",
+  "version": "2.0",
   "purpose": "Centralized API system to monitor, control, and analyze data from hundreds of IoT sensors across multiple factory locations.",
   "personas": [
     {
@@ -203,13 +203,17 @@
     "database": "PostgreSQL",
     "auth": "OAuth2 + JWT",
     "frontend": "HTML, CSS, JavaScript, D3.js",
-    "deployment": "Docker"
+    "deployment": "Docker",
+    "reports": "ReportLab (PDF), csv module",
+    "charts": "D3.js v7",
+    "scheduler": "asyncio background loop with atomic claim"
   },
   "out_of_scope": [
     "Multi-tenancy",
-    "Real hardware ingestion (sensor data is simulated/seeded)"
+    "Real hardware ingestion (use scripts/simulate.py or the API)",
+    "Distributed rate limiting (needs Redis)"
   ],
-  "status": "Milestone M3 (Day 7): web UI for auth, sensors, profile and admin implemented",
+  "status": "Complete: all requirements implemented and covered by automated tests (Day 10)",
   "traceability_matrix": {
     "AUTH-001": [
       {
@@ -259,6 +263,18 @@
       {
         "operationId": "get_me",
         "endpoint": "GET /users/me"
+      },
+      {
+        "operationId": "update_me",
+        "endpoint": "PATCH /users/me"
+      },
+      {
+        "operationId": "get_my_profile",
+        "endpoint": "GET /users/me/profile"
+      },
+      {
+        "operationId": "put_my_profile",
+        "endpoint": "PUT /users/me/profile"
       }
     ],
     "CRUD-001": [
@@ -305,9 +321,29 @@
       {
         "operationId": "bulk_create_readings",
         "endpoint": "POST /sensors/{sensor_id}/readings/bulk"
+      },
+      {
+        "operationId": "list_reports",
+        "endpoint": "GET /reports"
+      },
+      {
+        "operationId": "create_report",
+        "endpoint": "POST /reports"
+      },
+      {
+        "operationId": "get_report",
+        "endpoint": "GET /reports/{report_id}"
+      },
+      {
+        "operationId": "delete_report",
+        "endpoint": "DELETE /reports/{report_id}"
       }
     ],
     "CRUD-002": [
+      {
+        "operationId": "register",
+        "endpoint": "POST /auth/register"
+      },
       {
         "operationId": "create_sensor",
         "endpoint": "POST /sensors"
@@ -317,12 +353,16 @@
         "endpoint": "PATCH /sensors/{sensor_id}"
       },
       {
-        "operationId": "register",
-        "endpoint": "POST /auth/register"
-      },
-      {
         "operationId": "create_reading",
         "endpoint": "POST /sensors/{sensor_id}/readings"
+      },
+      {
+        "operationId": "create_report",
+        "endpoint": "POST /reports"
+      },
+      {
+        "operationId": "put_my_profile",
+        "endpoint": "PUT /users/me/profile"
       }
     ],
     "DASH-001": [
@@ -363,12 +403,156 @@
     ],
     "API-001": [
       {
+        "operationId": "admin_update_user",
+        "endpoint": "PATCH /users/{user_id}"
+      },
+      {
+        "operationId": "bulk_create_readings",
+        "endpoint": "POST /sensors/{sensor_id}/readings/bulk"
+      },
+      {
+        "operationId": "bulk_create_sensors",
+        "endpoint": "POST /sensors/bulk"
+      },
+      {
+        "operationId": "bulk_delete_sensors",
+        "endpoint": "DELETE /sensors/bulk"
+      },
+      {
+        "operationId": "create_reading",
+        "endpoint": "POST /sensors/{sensor_id}/readings"
+      },
+      {
+        "operationId": "create_report",
+        "endpoint": "POST /reports"
+      },
+      {
+        "operationId": "create_sensor",
+        "endpoint": "POST /sensors"
+      },
+      {
+        "operationId": "dashboard_summary",
+        "endpoint": "GET /dashboard/summary"
+      },
+      {
+        "operationId": "dashboard_timeseries",
+        "endpoint": "GET /dashboard/timeseries"
+      },
+      {
+        "operationId": "delete_report",
+        "endpoint": "DELETE /reports/{report_id}"
+      },
+      {
+        "operationId": "delete_sensor",
+        "endpoint": "DELETE /sensors/{sensor_id}"
+      },
+      {
+        "operationId": "delete_user",
+        "endpoint": "DELETE /users/{user_id}"
+      },
+      {
+        "operationId": "download_report",
+        "endpoint": "GET /reports/{report_id}/download"
+      },
+      {
+        "operationId": "get_config",
+        "endpoint": "GET /admin/config/{key}"
+      },
+      {
+        "operationId": "get_me",
+        "endpoint": "GET /users/me"
+      },
+      {
+        "operationId": "get_my_profile",
+        "endpoint": "GET /users/me/profile"
+      },
+      {
+        "operationId": "get_report",
+        "endpoint": "GET /reports/{report_id}"
+      },
+      {
+        "operationId": "get_sensor",
+        "endpoint": "GET /sensors/{sensor_id}"
+      },
+      {
+        "operationId": "get_user",
+        "endpoint": "GET /users/{user_id}"
+      },
+      {
         "operationId": "health",
         "endpoint": "GET /health"
       },
       {
         "operationId": "health_db",
         "endpoint": "GET /health/db"
+      },
+      {
+        "operationId": "list_activity_logs",
+        "endpoint": "GET /admin/activity-logs"
+      },
+      {
+        "operationId": "list_config",
+        "endpoint": "GET /admin/config"
+      },
+      {
+        "operationId": "list_readings",
+        "endpoint": "GET /sensors/{sensor_id}/readings"
+      },
+      {
+        "operationId": "list_reports",
+        "endpoint": "GET /reports"
+      },
+      {
+        "operationId": "list_sensors",
+        "endpoint": "GET /sensors"
+      },
+      {
+        "operationId": "list_users",
+        "endpoint": "GET /users"
+      },
+      {
+        "operationId": "login",
+        "endpoint": "POST /auth/login"
+      },
+      {
+        "operationId": "logout",
+        "endpoint": "POST /auth/logout"
+      },
+      {
+        "operationId": "put_config",
+        "endpoint": "PUT /admin/config/{key}"
+      },
+      {
+        "operationId": "put_my_profile",
+        "endpoint": "PUT /users/me/profile"
+      },
+      {
+        "operationId": "refresh_token",
+        "endpoint": "POST /auth/refresh"
+      },
+      {
+        "operationId": "register",
+        "endpoint": "POST /auth/register"
+      },
+      {
+        "operationId": "replace_sensor",
+        "endpoint": "PUT /sensors/{sensor_id}"
+      },
+      {
+        "operationId": "resend_verification",
+        "endpoint": "POST /auth/resend-verification"
+      },
+      {
+        "operationId": "update_me",
+        "endpoint": "PATCH /users/me"
+      },
+      {
+        "operationId": "update_sensor",
+        "endpoint": "PATCH /sensors/{sensor_id}"
+      },
+      {
+        "operationId": "verify_email",
+        "endpoint": "GET /auth/verify-email"
       }
     ],
     "API-002": [
@@ -379,6 +563,14 @@
       {
         "operationId": "refresh_token",
         "endpoint": "POST /auth/refresh"
+      },
+      {
+        "operationId": "logout",
+        "endpoint": "POST /auth/logout"
+      },
+      {
+        "operationId": "get_me",
+        "endpoint": "GET /users/me"
       }
     ]
   },
@@ -465,5 +657,149 @@
     "The web app is a static single-page app served by the API at /ui (no build step); it talks to /api/v1 on the same origin, so CORS is not needed.",
     "Access and refresh tokens are kept in browser storage; a strict Content-Security-Policy and DOM building without innerHTML reduce XSS risk.",
     "Verification emails link to the web app (/ui/#/verify?token=...), which calls GET /api/v1/auth/verify-email."
-  ]
+  ],
+  "implementation": {
+    "AUTH-001": {
+      "status": "implemented",
+      "code": [
+        "src/app/api/v1/auth.py",
+        "src/app/services/auth_service.py",
+        "src/app/services/email.py",
+        "src/frontend/js/views/register.js",
+        "src/frontend/js/views/verify.js"
+      ],
+      "tests": [
+        "tests/test_auth.py",
+        "tests/test_email_verification.py",
+        "tests/frontend/validators.test.mjs"
+      ]
+    },
+    "AUTH-002": {
+      "status": "implemented",
+      "code": [
+        "src/app/core/security.py",
+        "src/app/services/auth_service.py",
+        "src/frontend/js/api.js",
+        "src/frontend/js/session.js"
+      ],
+      "tests": [
+        "tests/test_security.py",
+        "tests/test_auth.py",
+        "tests/frontend/api.test.mjs",
+        "tests/frontend/session.test.mjs"
+      ]
+    },
+    "AUTH-003": {
+      "status": "implemented",
+      "code": [
+        "src/app/api/deps.py",
+        "src/app/api/v1/users.py",
+        "src/frontend/js/router.js",
+        "src/frontend/js/views/admin-users.js"
+      ],
+      "tests": [
+        "tests/test_users_rbac.py",
+        "tests/test_admin.py",
+        "tests/frontend/route-match.test.mjs"
+      ]
+    },
+    "CRUD-001": {
+      "status": "implemented",
+      "code": [
+        "src/app/services/sensor_service.py",
+        "src/app/services/reading_service.py",
+        "src/frontend/js/views/sensors.js",
+        "src/frontend/js/views/sensor-form.js"
+      ],
+      "tests": [
+        "tests/test_sensors.py",
+        "tests/test_readings.py"
+      ]
+    },
+    "CRUD-002": {
+      "status": "implemented",
+      "code": [
+        "src/app/core/sanitize.py",
+        "src/app/schemas/",
+        "src/frontend/js/validators.js"
+      ],
+      "tests": [
+        "tests/test_sanitize.py",
+        "tests/frontend/validators.test.mjs"
+      ]
+    },
+    "DASH-001": {
+      "status": "implemented",
+      "code": [
+        "src/app/services/dashboard_service.py",
+        "src/app/services/analytics.py",
+        "src/frontend/js/views/dashboard.js",
+        "src/frontend/js/charts.js"
+      ],
+      "tests": [
+        "tests/test_dashboard.py",
+        "tests/test_analytics.py",
+        "tests/frontend/dashboard-utils.test.mjs"
+      ]
+    },
+    "DASH-002": {
+      "status": "implemented",
+      "code": [
+        "src/app/services/report_service.py",
+        "src/app/services/report_render.py",
+        "src/app/core/scheduler.py",
+        "src/frontend/js/views/reports.js"
+      ],
+      "tests": [
+        "tests/test_reports.py",
+        "tests/test_report_render.py",
+        "tests/test_scheduler.py",
+        "tests/test_schedule.py"
+      ]
+    },
+    "API-001": {
+      "status": "implemented",
+      "code": [
+        "docs/api-spec.yaml",
+        "src/app/core/rate_limit.py",
+        "src/app/core/middleware.py"
+      ],
+      "tests": [
+        "tests/test_contract.py",
+        "tests/test_api_spec.py",
+        "tests/test_rate_limit.py"
+      ]
+    },
+    "API-002": {
+      "status": "implemented",
+      "code": [
+        "src/frontend/js/api.js",
+        "src/frontend/js/auth.js"
+      ],
+      "tests": [
+        "tests/frontend/api.test.mjs",
+        "tests/test_frontend_static.py"
+      ]
+    }
+  },
+  "non_functional_verification": {
+    "p95 under 300 ms for reads": "tests/performance/load_test.py (results in tests/performance/results/)",
+    "mobile-responsive UI": "docs/qa-checklist.md item 11",
+    "security": "tests/test_security.py, tests/test_sanitize.py, tests/test_frontend_static.py, CSP in src/app/core/middleware.py",
+    "deployment": "Dockerfile, docker-compose.yml, docs/deployment.md"
+  },
+  "deliverables": {
+    "SRS": "docs/srs.json",
+    "OpenAPI": "docs/api-spec.yaml",
+    "Migrations": "db/migrations/",
+    "Source": "src/",
+    "Docker": "docker-compose.yml",
+    "Tests": "tests/",
+    "API docs": "docs/api/",
+    "User manual and README": "docs/user-manual.md, docs/README.md",
+    "Deployment guide": "docs/deployment.md",
+    "Demo": "demo/",
+    "Postman": "docs/postman/",
+    "Performance results": "tests/performance/"
+  }
 }

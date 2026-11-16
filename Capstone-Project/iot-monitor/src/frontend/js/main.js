@@ -6,10 +6,11 @@ import { toast } from "./ui.js";
 
 import adminLogsView from "./views/admin-logs.js";
 import adminUsersView from "./views/admin-users.js";
-import homeView from "./views/home.js";
+import dashboardView from "./views/dashboard.js";
 import loginView from "./views/login.js";
 import profileView from "./views/profile.js";
 import registerView from "./views/register.js";
+import reportsView from "./views/reports.js";
 import sensorDetailView from "./views/sensor-detail.js";
 import sensorFormView from "./views/sensor-form.js";
 import sensorsView from "./views/sensors.js";
@@ -21,11 +22,12 @@ const routes = [
   { path: "/login", view: loginView, access: "guest-only" },
   { path: "/register", view: registerView, access: "guest-only" },
   { path: "/verify", view: verifyView, access: "public" },
-  { path: "/", view: homeView, access: "auth" },
+  { path: "/", view: dashboardView, access: "auth" },
   { path: "/sensors", view: sensorsView, access: "auth" },
   { path: "/sensors/new", view: sensorFormView, access: ["admin", "user"] },
   { path: "/sensors/:id", view: sensorDetailView, access: "auth" },
   { path: "/sensors/:id/edit", view: sensorFormView, access: ["admin", "user"] },
+  { path: "/reports", view: reportsView, access: "auth" },
   { path: "/profile", view: profileView, access: "auth" },
   { path: "/admin/users", view: adminUsersView, access: ["admin"] },
   { path: "/admin/logs", view: adminLogsView, access: ["admin"] },

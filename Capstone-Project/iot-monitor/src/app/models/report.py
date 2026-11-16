@@ -33,5 +33,9 @@ class Report(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Scheduling: a row with scheduled=True is a *definition*; every run creates a new row (source_id = definition id)
+    next_run_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
+    last_run_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    source_id: Mapped[int | None] = mapped_column(Integer)
 
     user: Mapped["User"] = relationship(back_populates="reports")

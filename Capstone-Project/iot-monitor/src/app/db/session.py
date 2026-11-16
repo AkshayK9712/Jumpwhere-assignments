@@ -22,6 +22,11 @@ SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 Base = declarative_base()
 
 
+def get_session_factory():
+    """Dependency that returns the session factory (background jobs open their own sessions)."""
+    return SessionLocal
+
+
 def get_db():
     """FastAPI dependency that yields a DB session and always closes it."""
     db = SessionLocal()

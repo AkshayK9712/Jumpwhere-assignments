@@ -1,6 +1,7 @@
 from functools import lru_cache
 from pathlib import Path
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Project root = .../iot-monitor (this file is src/app/core/config.py)
@@ -32,7 +33,20 @@ class Settings(BaseSettings):
     EMAIL_BACKEND: str = "console"
     SMTP_HOST: str = "localhost"
     SMTP_PORT: int = 1025
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_USE_TLS: bool = False                 # STARTTLS; turn on for real mail servers
     EMAIL_FROM: str = "no-reply@iot-monitor.local"
+
+    # Reports
+    REPORTS_DIR: str = str(ROOT_DIR / "reports_output")   # generated PDF/CSV files are stored here
+    REPORTS_RETENTION_DAYS: int = 30
+    MAX_REPORT_READINGS: int = 200_000         # safety cap per report
+    MAX_REPORT_SENSORS: int = 200
+
+    # Background scheduler (scheduled reports, clean-up of expired reports)
+    SCHEDULER_ENABLED: bool = True
+    SCHEDULER_INTERVAL_SECONDS: int = 60
 
     # Rate limiting (in-memory, per process)
     RATE_LIMIT_ENABLED: bool = True
@@ -45,6 +59,18 @@ class Settings(BaseSettings):
     SEED_DEMO_DATA: bool = True
 
     model_config = SettingsConfigDict(env_file=ROOT_DIR / ".env", extra="ignore")
+
+    @model_validator(mode="after")
+    def _refuse_unsafe_production_settings(self):
+        if self.ENVIRONMENT.lower() == "production":
+            problems = []
+            if len(self.JWT_SECRET) < 32 or self.JWT_SECRET in {"dev-only-secret", "change-me", "change-me-to-a-long-random-string"}:
+                problems.append("JWT_SECRET must be a random string of at least 32 characters")
+            if self.EMAIL_BACKEND == "memory":
+                problems.append("EMAIL_BACKEND must not be 'memory'")
+            if problems:
+                raise ValueError("Unsafe production configuration: " + "; ".join(problems))
+        return self
 
     @property
     def cors_origins_list(self) -> list[str]:

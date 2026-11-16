@@ -31,6 +31,7 @@ def test_security_headers(client):
     ui = client.get("/ui/")
     csp = ui.headers["content-security-policy"]
     assert "script-src 'self'" in csp and "frame-ancestors 'none'" in csp
+    assert "https://cdnjs.cloudflare.com" in csp  # D3 fallback host
     assert ui.headers["x-content-type-options"] == "nosniff"
     api = client.get("/api/v1/health")
     assert api.headers["x-content-type-options"] == "nosniff"
@@ -58,3 +59,9 @@ def test_relative_imports_resolve():
     for f in JS_FILES:
         for rel in re.findall(r'from "(\.[^"]+)"', f.read_text(encoding="utf-8")):
             assert (f.parent / rel).resolve().exists(), f"{f.name} imports missing file {rel}"
+
+
+def test_d3_loader_uses_a_pinned_version_and_a_local_copy_first():
+    text = (FRONTEND / "js" / "d3-loader.js").read_text(encoding="utf-8")
+    assert re.search(r"/d3/7\.\d+\.\d+/d3\.min\.js", text), "pin an exact D3 version"
+    assert text.index("vendor/d3.min.js") < text.index("cdnjs.cloudflare.com")

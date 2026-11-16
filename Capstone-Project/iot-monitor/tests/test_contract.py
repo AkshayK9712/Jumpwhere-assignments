@@ -29,3 +29,14 @@ def test_every_implemented_endpoint_is_in_the_spec():
 def test_sensor_metadata_is_exposed_under_its_json_name():
     schema = app.openapi()["components"]["schemas"]["SensorOut"]["properties"]
     assert "metadata" in schema and "meta" not in schema
+
+
+def test_every_operation_in_the_spec_is_implemented():
+    live = {}
+    for path, item in app.openapi()["paths"].items():
+        if path.startswith("/api/v1"):
+            for method, op in item.items():
+                if method in METHODS:
+                    live[(path[len("/api/v1"):], method)] = op["operationId"]
+    missing = [(m.upper(), p) for p, item in SPEC["paths"].items() for m in item if m in METHODS and (p, m) not in live]
+    assert missing == [], f"documented but not implemented: {missing}"

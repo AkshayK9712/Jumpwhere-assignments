@@ -33,7 +33,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 
 
 CSP = (
-    "default-src 'self'; img-src 'self' data: https:; style-src 'self'; script-src 'self'; "
+    "default-src 'self'; img-src 'self' data: https:; style-src 'self'; script-src 'self' https://cdnjs.cloudflare.com; "
     "connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
 )
 

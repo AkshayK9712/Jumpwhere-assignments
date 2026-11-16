@@ -69,6 +69,21 @@ async function readBody(res) {
   }
 }
 
+/** Content-Disposition: attachment; filename="report.pdf"  ->  report.pdf */
+export function filenameFrom(header) {
+  if (!header) return null;
+  const star = /filename\*=(?:UTF-8'')?([^;]+)/i.exec(header);
+  if (star) {
+    try {
+      return decodeURIComponent(star[1].trim().replace(/^"|"$/g, ""));
+    } catch {
+      /* fall through to the plain form */
+    }
+  }
+  const plain = /filename="?([^";]+)"?/i.exec(header);
+  return plain ? plain[1].trim() : null;
+}
+
 let refreshing = null;
 
 /** Exchange the refresh token for a new pair. Parallel callers share one request. */
@@ -97,7 +112,7 @@ function refreshTokens() {
 }
 
 /**
- * request("GET", "/sensors", { params, json, form, auth = true, retries, headers })
+ * request("GET", "/sensors", { params, json, form, auth = true, retries, headers, blob })
  * Resolves with the parsed body (null for 204); rejects with ApiError.
  */
 export async function request(method, path, opts = {}) {
@@ -154,6 +169,10 @@ export async function request(method, path, opts = {}) {
       continue;
     }
 
+    if (res.ok && opts.blob) {
+      // file download: resolves { blob, filename }
+      return { blob: await res.blob(), filename: filenameFrom(res.headers.get("content-disposition")) };
+    }
     const data = await readBody(res);
     if (!res.ok) throw toApiError(res.status, data, res);
     return data;

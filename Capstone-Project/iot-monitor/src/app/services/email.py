@@ -21,7 +21,11 @@ def send_email(to: str, subject: str, body: str) -> None:
         msg["From"], msg["To"], msg["Subject"] = settings.EMAIL_FROM, to, subject
         msg.set_content(body)
         try:
-            with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=5) as smtp:
+            with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=10) as smtp:
+                if settings.SMTP_USE_TLS:
+                    smtp.starttls()
+                if settings.SMTP_USER:
+                    smtp.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
                 smtp.send_message(msg)
         except Exception:  # never fail a request because the mail server is down
             logger.exception("Could not send email to %s", to)
@@ -46,5 +50,17 @@ def send_verification_email(user_id: int, email: str, name: str) -> None:
             f"{verification_link(token)}\n\n"
             f"This link expires in {settings.VERIFY_TOKEN_EXPIRE_HOURS} hours.\n"
             "If you did not sign up, you can ignore this email.\n"
+        ),
+    )
+
+
+def send_report_ready_email(to: str, name: str, report_name: str) -> None:
+    send_email(
+        to=to,
+        subject=f"Your report is ready: {report_name}",
+        body=(
+            f"Hi {name},\n\n"
+            f'Your scheduled report "{report_name}" has been generated.\n'
+            f"Open it here (login required): {settings.API_BASE_URL.rstrip('/')}/ui/#/reports\n"
         ),
     )

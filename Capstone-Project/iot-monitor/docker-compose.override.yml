@@ -1,0 +1,35 @@
+# Loaded automatically by `docker compose up` (development only).
+services:
+  db:
+    ports:
+      - "5432:5432"
+
+  api:
+    environment:
+      EMAIL_BACKEND: smtp          # verification emails go to MailHog: http://localhost:8025
+      SMTP_HOST: mailhog
+      SEED_ON_START: "true"
+    volumes:
+      - ./src:/app/src
+      - ./db:/app/db
+    command: sh -c "alembic upgrade head && python scripts/seed.py && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    depends_on:
+      mailhog:
+        condition: service_started
+
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # web UI
+
+  # Live demo data:  docker compose --profile demo up
+  simulator:
+    profiles: ["demo"]
+    image: python:3.12-slim
+    working_dir: /app
+    volumes:
+      - ./scripts:/app/scripts:ro
+    command: python scripts/simulate.py --base-url http://api:8000 --interval 5
+    depends_on:
+      - api

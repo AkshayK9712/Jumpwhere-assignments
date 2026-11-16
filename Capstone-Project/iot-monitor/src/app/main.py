@@ -1,6 +1,7 @@
+import asyncio
 import logging
 import mimetypes
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -12,6 +13,8 @@ from app.core.config import settings
 from app.core.logging import setup_logging
 from app.core.middleware import RequestLoggingMiddleware, SecurityHeadersMiddleware
 from app.core.rate_limit import RateLimitMiddleware
+from app.core.scheduler import scheduler_loop
+from app.db.session import SessionLocal
 
 setup_logging()
 
@@ -25,7 +28,14 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("IoT Monitor API started (env=%s, email=%s)", settings.ENVIRONMENT, settings.EMAIL_BACKEND)
+    scheduler = None
+    if settings.SCHEDULER_ENABLED:
+        scheduler = asyncio.create_task(scheduler_loop(SessionLocal, settings.SCHEDULER_INTERVAL_SECONDS))
     yield
+    if scheduler is not None:
+        scheduler.cancel()
+        with suppress(asyncio.CancelledError):
+            await scheduler
     logger.info("IoT Monitor API shutting down")
 
 

@@ -1029,17 +1029,21 @@ paths:
       parameters:
       - $ref: '#/components/parameters/Page'
       - $ref: '#/components/parameters/PageSize'
+      - name: scheduled
+        in: query
+        required: false
+        description: true = schedule definitions, false = generated reports
+        schema:
+          type: boolean
       security:
       - bearerAuth: []
       responses:
         '200':
-          description: Reports
+          description: Page of reports
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Report'
+                $ref: '#/components/schemas/ReportPage'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '422':
@@ -1890,12 +1894,18 @@ components:
           type: integer
         faulty_sensors:
           type: integer
-        readings_last_24h:
+        readings_in_range:
           type: integer
         sensors_by_category:
           type: object
           additionalProperties:
             type: integer
+        range_from:
+          type: string
+          format: date-time
+        range_to:
+          type: string
+          format: date-time
         generated_at:
           type: string
           format: date-time
@@ -1904,15 +1914,43 @@ components:
       - active_sensors
       - inactive_sensors
       - faulty_sensors
-      - readings_last_24h
+      - readings_in_range
+      - sensors_by_category
+      - range_from
+      - range_to
       - generated_at
     TimeSeries:
       type: object
       properties:
         sensor_id:
           type: integer
+        title:
+          type: string
+        unit:
+          type: string
+          nullable: true
+        thresholds:
+          type: object
+          properties:
+            min:
+              type: number
+              nullable: true
+            max:
+              type: number
+              nullable: true
+          nullable: true
         interval:
           type: string
+          enum:
+          - minute
+          - hour
+          - day
+        range_from:
+          type: string
+          format: date-time
+        range_to:
+          type: string
+          format: date-time
         points:
           type: array
           items:
@@ -1929,15 +1967,25 @@ components:
                 type: number
               count:
                 type: integer
+            required:
+            - bucket
+            - avg
+            - min
+            - max
+            - count
       required:
       - sensor_id
+      - title
       - interval
+      - range_from
+      - range_to
       - points
     ReportCreate:
       type: object
       properties:
         name:
           type: string
+          minLength: 1
           maxLength: 150
         format:
           type: string
@@ -1949,6 +1997,7 @@ components:
           properties:
             sensor_ids:
               type: array
+              maxItems: 100
               items:
                 type: integer
             category:
@@ -1959,6 +2008,11 @@ components:
             to:
               type: string
               format: date-time
+            window_hours:
+              type: integer
+              minimum: 1
+              maximum: 8784
+              description: Relative period ending now (scheduled reports)
             template:
               type: string
               enum:
@@ -1966,7 +2020,6 @@ components:
               - detailed
               - alerts
               default: summary
-          additionalProperties: true
         scheduled:
           type: boolean
           default: false
@@ -1982,7 +2035,9 @@ components:
             email:
               type: boolean
               default: true
-          description: Required when scheduled is true
+          required:
+          - frequency
+          description: Required when scheduled is true; then 'from'/'to' must be omitted
       required:
       - name
       - format
@@ -2018,6 +2073,18 @@ components:
           type: string
           format: date-time
           nullable: true
+        next_run_at:
+          type: string
+          format: date-time
+          nullable: true
+        last_run_at:
+          type: string
+          format: date-time
+          nullable: true
+        source_id:
+          type: integer
+          nullable: true
+          description: 'For generated runs: the schedule that created them'
       required:
       - id
       - user_id
@@ -2026,6 +2093,27 @@ components:
       - status
       - scheduled
       - created_at
+    ReportPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Report'
+        total:
+          type: integer
+        page:
+          type: integer
+        page_size:
+          type: integer
+        pages:
+          type: integer
+      required:
+      - items
+      - total
+      - page
+      - page_size
+      - pages
     ActivityLog:
       type: object
       properties:

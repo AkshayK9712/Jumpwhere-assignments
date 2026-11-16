@@ -12,3 +12,9 @@ pgdata/
 
 dev.db
 *.db
+
+reports_output/
+node_modules/
+.env.production
+.env.staging
+tests/performance/results/*.json
