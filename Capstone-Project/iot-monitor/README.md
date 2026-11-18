@@ -105,6 +105,3 @@ python tests/performance/load_test.py --users 10 --duration 20     # see tests/p
 - **Branching:** `main` (stable) <- `dev` <- `feature/*`.
 - **Offline charts:** download `d3.min.js` (v7) to `src/frontend/vendor/d3.min.js`; the app tries that file before the CDN.
 
-## Status
-
-All ten days complete: foundation, models and API contract, authentication, email verification and RBAC, sensor and reading CRUD, web app, dashboard, reports, and final integration and delivery.
